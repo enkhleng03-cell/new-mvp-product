@@ -1,0 +1,2851 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Виртуал Титрлэлтийн Лаборатори v2 | Сорилт ба Симуляци</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+Mongolian:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-surface: #121829;
+  --bg-elevated: #1a2238;
+  --bg-glass: rgba(26, 34, 56, 0.65);
+  --ink-primary: #e8eaf0;
+  --ink-secondary: #a0a8bd;
+  --ink-muted: #6b7390;
+  --accent-acid: #ff6b9d;
+  --accent-base: #4ecdc4;
+  --accent-gold: #f5c842;
+  --accent-violet: #a78bfa;
+  --accent-amber: #fb923c;
+  --accent-success: #10b981;
+  --accent-danger: #ef4444;
+  --line: rgba(255,255,255,0.08);
+  --line-strong: rgba(255,255,255,0.16);
+  --shadow-deep: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Noto Sans Mongolian', 'JetBrains Mono', sans-serif;
+  background: var(--bg-deep);
+  color: var(--ink-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,107,157,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(78,205,196,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.04) 0%, transparent 70%),
+    var(--bg-deep);
+  background-attachment: fixed;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 1; opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===================== HEADER ===================== */
+.app-header {
+  position: relative; z-index: 10;
+  padding: 18px 36px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: rgba(10,14,26,0.7);
+  backdrop-filter: blur(20px);
+  flex-wrap: wrap; gap: 16px;
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+
+.brand-mark {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-acid) 0%, var(--accent-violet) 50%, var(--accent-base) 100%);
+  display: grid; place-items: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700; font-size: 24px; color: white;
+  box-shadow: 0 8px 24px rgba(255,107,157,0.4);
+  position: relative; overflow: hidden;
+}
+
+.brand-text h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600; letter-spacing: -0.02em;
+}
+.brand-text p {
+  font-size: 10px; color: var(--ink-muted);
+  letter-spacing: 0.15em; text-transform: uppercase; margin-top: 4px;
+}
+
+.user-stats {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+
+.stat-pill {
+  padding: 7px 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: flex; gap: 6px; align-items: center;
+  font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  backdrop-filter: blur(10px);
+}
+.stat-pill .label { color: var(--ink-muted); font-size: 10px; }
+.stat-pill .value { font-weight: 700; }
+.stat-pill.score .value { color: var(--accent-gold); }
+.stat-pill.level .value { color: var(--accent-base); }
+.stat-pill.success .value { color: var(--accent-success); }
+.stat-pill.fail .value { color: var(--accent-danger); }
+
+/* ===================== MODE TABS (top) ===================== */
+.mode-tabs {
+  display: flex; gap: 6px;
+  background: var(--bg-deep);
+  padding: 4px; border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.mode-tab {
+  padding: 8px 14px;
+  border: none; background: transparent;
+  color: var(--ink-secondary);
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  border-radius: 999px; cursor: pointer;
+  transition: all 0.25s; display: flex; align-items: center; gap: 6px;
+}
+.mode-tab.active.practice {
+  background: linear-gradient(135deg, rgba(78,205,196,0.25), rgba(78,205,196,0.1));
+  color: var(--accent-base);
+  box-shadow: inset 0 0 0 1px rgba(78,205,196,0.4);
+}
+.mode-tab.active.challenge {
+  background: linear-gradient(135deg, rgba(245,200,66,0.25), rgba(251,146,60,0.15));
+  color: var(--accent-gold);
+  box-shadow: inset 0 0 0 1px rgba(245,200,66,0.4);
+}
+
+.mode-toggle.active[data-titration="alkali"] {
+  background: linear-gradient(135deg, rgba(78,205,196,0.2), rgba(78,205,196,0.05));
+  color: var(--accent-base);
+  box-shadow: inset 0 0 0 1px rgba(78,205,196,0.3);
+}
+.mode-toggle.active[data-titration="acid"] {
+  background: linear-gradient(135deg, rgba(255,107,157,0.2), rgba(255,107,157,0.05));
+  color: var(--accent-acid);
+  box-shadow: inset 0 0 0 1px rgba(255,107,157,0.3);
+}
+
+/* ===================== MAIN LAYOUT ===================== */
+.lab-container {
+  position: relative; z-index: 5;
+  display: grid;
+  grid-template-columns: 320px 1fr 360px;
+  gap: 18px;
+  padding: 18px 36px 36px;
+  min-height: calc(100vh - 90px);
+}
+
+@media (max-width: 1280px) { .lab-container { grid-template-columns: 280px 1fr 320px; padding: 18px; } }
+@media (max-width: 1024px) { .lab-container { grid-template-columns: 1fr; } }
+
+/* ===================== PANELS ===================== */
+.panel {
+  background: var(--bg-glass);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+.panel-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.panel-header h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
+}
+.panel-header .badge {
+  font-size: 9px; padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(78,205,196,0.15); color: var(--accent-base);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+.panel-header .badge.warn { background: rgba(245,200,66,0.15); color: var(--accent-gold); }
+
+.panel-body {
+  padding: 16px 20px; flex: 1; overflow-y: auto;
+}
+
+/* ===================== LEFT: SETUP ===================== */
+.section-label {
+  font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ink-muted);
+  margin: 14px 0 8px; font-family: 'JetBrains Mono', monospace;
+  display: flex; align-items: center; gap: 6px;
+}
+.section-label .num {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(167,139,250,0.15);
+  border: 1px solid rgba(167,139,250,0.3);
+  color: var(--accent-violet);
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: 700;
+}
+
+.field { margin-bottom: 12px; }
+.field label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--ink-secondary); margin-bottom: 5px;
+}
+.field label .hint { color: var(--ink-muted); font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+
+.field select, .field input {
+  width: 100%; padding: 9px 11px;
+  background: var(--bg-deep); border: 1px solid var(--line);
+  border-radius: 8px; color: var(--ink-primary);
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  transition: border-color 0.2s;
+}
+.field select:focus, .field input:focus { outline: none; border-color: var(--accent-violet); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Range slider for amounts */
+.range-field {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.range-field .row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.range-field .name { font-size: 11px; color: var(--ink-secondary); }
+.range-field .val {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  font-weight: 700; color: var(--accent-gold);
+}
+.range-input {
+  -webkit-appearance: none;
+  width: 100%; height: 4px;
+  background: linear-gradient(90deg, var(--accent-acid), var(--accent-violet), var(--accent-base));
+  border-radius: 999px; outline: none;
+}
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: white; cursor: pointer;
+  box-shadow: 0 0 0 2px var(--bg-deep), 0 0 12px rgba(255,255,255,0.4);
+}
+.range-input::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: white; cursor: pointer; border: none;
+  box-shadow: 0 0 0 2px var(--bg-deep), 0 0 12px rgba(255,255,255,0.4);
+}
+
+.indicator-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+}
+.indicator-chip {
+  padding: 8px 6px;
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer; text-align: center; font-size: 10px;
+  transition: all 0.2s;
+}
+.indicator-chip:hover { border-color: var(--line-strong); }
+.indicator-chip.selected { border-color: var(--accent-gold); box-shadow: 0 0 0 1px var(--accent-gold); }
+.indicator-chip .swatch { width: 100%; height: 5px; border-radius: 3px; margin-bottom: 4px; }
+.indicator-chip .name { font-weight: 600; display: block; font-size: 10px; }
+.indicator-chip .ph { color: var(--ink-muted); font-size: 9px; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+.action-btn {
+  width: 100%; padding: 12px;
+  border: none; border-radius: 10px;
+  font-family: inherit; font-weight: 600; font-size: 12px;
+  cursor: pointer; transition: all 0.25s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.action-btn.primary {
+  background: linear-gradient(135deg, var(--accent-violet), #8b5cf6);
+  color: white;
+  box-shadow: 0 8px 20px rgba(167,139,250,0.3);
+}
+.action-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(167,139,250,0.45); }
+.action-btn.primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.action-btn.secondary {
+  background: var(--bg-deep); color: var(--ink-primary);
+  border: 1px solid var(--line);
+}
+.action-btn.secondary:hover { border-color: var(--line-strong); background: var(--bg-elevated); }
+.action-btn.gold {
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-amber));
+  color: #1a1a1a; font-weight: 700;
+  box-shadow: 0 8px 20px rgba(245,200,66,0.3);
+}
+.action-btn.gold:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(245,200,66,0.45); }
+
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+
+/* Filling/preparation steps */
+.fill-step {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+  transition: all 0.3s;
+}
+.fill-step.done {
+  border-color: var(--accent-success);
+  background: linear-gradient(135deg, rgba(16,185,129,0.1), var(--bg-deep));
+}
+.fill-step.active {
+  border-color: var(--accent-violet);
+  box-shadow: 0 0 0 1px var(--accent-violet);
+}
+.fill-step .icon {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  display: grid; place-items: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.fill-step.done .icon { background: var(--accent-success); color: white; }
+.fill-step .text { flex: 1; font-size: 11px; color: var(--ink-secondary); }
+.fill-step.done .text { color: var(--ink-primary); }
+.fill-step .text strong { color: var(--ink-primary); display: block; margin-bottom: 2px; font-size: 12px; }
+
+/* ===================== CENTER: 3D STAGE ===================== */
+.lab-stage {
+  position: relative;
+  background: var(--bg-glass);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+.stage-header {
+  position: absolute;
+  top: 14px; left: 14px; right: 14px; z-index: 20;
+  display: flex; justify-content: space-between; pointer-events: none;
+  gap: 12px; flex-wrap: wrap;
+}
+
+.stage-card {
+  background: rgba(10,14,26,0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  pointer-events: auto;
+}
+.stage-card .eyebrow {
+  font-size: 9px; letter-spacing: 0.25em;
+  color: var(--ink-muted); text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stage-card h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 600; margin-top: 2px;
+}
+
+.ph-readout { text-align: right; font-family: 'JetBrains Mono', monospace; }
+.ph-readout .value {
+  font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px;
+  background: linear-gradient(135deg, var(--accent-base), var(--accent-violet));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+#three-canvas {
+  flex: 1; width: 100%; min-height: 520px; display: block; cursor: grab;
+}
+#three-canvas:active { cursor: grabbing; }
+
+/* Volume readout */
+.volume-overlay {
+  position: absolute; bottom: 80px; right: 18px; z-index: 15;
+  background: rgba(10,14,26,0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 180px;
+}
+.volume-overlay .row {
+  display: flex; justify-content: space-between; gap: 12px;
+  font-size: 11px; padding: 3px 0;
+}
+.volume-overlay .row .lbl { color: var(--ink-muted); }
+.volume-overlay .row .val { color: var(--ink-primary); font-weight: 700; }
+.volume-overlay .row.endpoint .val { color: var(--accent-gold); }
+.volume-overlay .row.target .val { color: var(--accent-acid); }
+.volume-overlay .row.target.hidden { display: none; }
+
+/* Color reference strip */
+.color-strip {
+  position: absolute;
+  left: 18px; bottom: 80px; z-index: 15;
+  background: rgba(10,14,26,0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  width: 200px;
+}
+.color-strip .title {
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ink-muted); margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.color-bar {
+  height: 18px;
+  border-radius: 4px;
+  position: relative;
+  margin-bottom: 4px;
+}
+.color-bar::after {
+  content: '';
+  position: absolute;
+  width: 2px; height: 24px;
+  top: -3px;
+  background: white;
+  box-shadow: 0 0 8px rgba(255,255,255,0.6);
+  left: var(--ph-pos, 50%);
+  transition: left 0.5s ease-out;
+}
+.color-bar-labels {
+  display: flex; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--ink-muted); margin-top: 4px;
+}
+
+/* Stage controls */
+.stage-controls {
+  position: absolute; bottom: 18px; left: 50%;
+  transform: translateX(-50%); z-index: 20;
+  display: flex; gap: 8px;
+  background: rgba(10,14,26,0.88);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px;
+  flex-wrap: wrap; max-width: 90%;
+  justify-content: center;
+}
+
+.ctrl-btn {
+  padding: 9px 14px; border: none; background: transparent;
+  color: var(--ink-secondary); font-family: inherit;
+  font-size: 11px; font-weight: 600; border-radius: 999px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.ctrl-btn:hover:not(:disabled) { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
+.ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ctrl-btn.active {
+  background: linear-gradient(135deg, var(--accent-violet), #8b5cf6); color: white;
+}
+.ctrl-btn.danger.active {
+  background: linear-gradient(135deg, var(--accent-danger), #dc2626); color: white;
+}
+
+.drip-slider-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.04);
+  padding: 0 12px; border-radius: 999px;
+}
+.drip-slider-wrap .lbl { font-size: 10px; color: var(--ink-muted); }
+.drip-slider {
+  -webkit-appearance: none; width: 80px; height: 3px;
+  background: rgba(255,255,255,0.1); border-radius: 999px; outline: none;
+}
+.drip-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--accent-gold); cursor: pointer;
+  box-shadow: 0 0 8px rgba(245,200,66,0.6);
+}
+
+/* Challenge banner */
+.challenge-banner {
+  position: absolute; top: 70px; left: 14px; right: 14px; z-index: 18;
+  background: linear-gradient(135deg, rgba(245,200,66,0.15), rgba(251,146,60,0.1));
+  border: 1px solid rgba(245,200,66,0.4);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: none;
+  align-items: center; gap: 12px;
+  pointer-events: auto;
+  backdrop-filter: blur(20px);
+}
+.challenge-banner.show { display: flex; }
+.challenge-banner .ico {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-amber));
+  display: grid; place-items: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.challenge-banner .info { flex: 1; }
+.challenge-banner .info .label {
+  font-size: 9px; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--accent-gold);
+  font-family: 'JetBrains Mono', monospace;
+}
+.challenge-banner .info .text { font-size: 13px; margin-top: 2px; }
+.challenge-banner .timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 700;
+  color: var(--accent-gold);
+}
+
+/* ===================== RIGHT STACK ===================== */
+.right-stack {
+  display: flex; flex-direction: column; gap: 16px; min-height: 0;
+}
+
+/* Stats panel */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.stat-card {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.stat-card .label {
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ink-muted); font-family: 'JetBrains Mono', monospace;
+}
+.stat-card .value {
+  font-size: 22px; font-weight: 700; margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stat-card.success .value { color: var(--accent-success); }
+.stat-card.fail .value { color: var(--accent-danger); }
+.stat-card.attempts .value { color: var(--accent-violet); }
+.stat-card.rate .value { color: var(--accent-gold); }
+.stat-card .small {
+  font-size: 10px; color: var(--ink-muted); margin-top: 2px;
+}
+
+.progress-bar {
+  width: 100%; height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-success), var(--accent-base));
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+/* AI panel */
+.ai-panel { flex: 1; display: flex; flex-direction: column; min-height: 280px; }
+.ai-header-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-violet), #8b5cf6);
+  display: grid; place-items: center;
+  font-size: 13px; margin-right: 8px;
+}
+
+.ai-locked-overlay {
+  position: absolute; inset: 0;
+  background: rgba(10,14,26,0.88);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px;
+  border-radius: 18px; z-index: 10;
+  text-align: center; padding: 20px;
+}
+.ai-locked-overlay.show { display: flex; }
+.ai-locked-overlay .lock-icon {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-amber));
+  display: grid; place-items: center;
+  font-size: 22px;
+}
+.ai-locked-overlay h4 {
+  font-family: 'Cormorant Garamond', serif; font-size: 18px;
+}
+.ai-locked-overlay p {
+  font-size: 12px; color: var(--ink-secondary); max-width: 240px; line-height: 1.5;
+}
+
+.ai-messages {
+  flex: 1; overflow-y: auto;
+  padding: 14px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.ai-message {
+  font-size: 12px; line-height: 1.55;
+  padding: 10px 12px; border-radius: 10px; max-width: 92%;
+  animation: msgIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes msgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.ai-message.ai {
+  background: linear-gradient(135deg, rgba(167,139,250,0.12), rgba(139,92,246,0.06));
+  border: 1px solid rgba(167,139,250,0.2);
+  align-self: flex-start;
+}
+.ai-message.ai .speaker { color: var(--accent-violet); font-weight: 700; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 5px; display: block; }
+
+.ai-message.user {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  align-self: flex-end;
+}
+.ai-message.user .speaker { color: var(--accent-gold); font-weight: 700; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 5px; display: block; }
+
+.typing-dots { display: inline-flex; gap: 4px; padding: 4px 0; }
+.typing-dots span {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent-violet);
+  animation: typing 1.2s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+
+.ai-input-wrap {
+  border-top: 1px solid var(--line);
+  padding: 12px 16px;
+  display: flex; gap: 6px; align-items: flex-end;
+}
+.ai-input {
+  flex: 1; background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 8px; padding: 9px 11px;
+  color: var(--ink-primary); font-family: inherit;
+  font-size: 12px; resize: none;
+  min-height: 36px; max-height: 90px;
+}
+.ai-input:focus { outline: none; border-color: var(--accent-violet); }
+
+.ai-send {
+  width: 36px; height: 36px;
+  border-radius: 8px; border: none;
+  background: linear-gradient(135deg, var(--accent-violet), #8b5cf6);
+  color: white; cursor: pointer;
+  display: grid; place-items: center;
+  transition: transform 0.2s;
+}
+.ai-send:hover { transform: scale(1.05); }
+.ai-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ai-suggestions {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  padding: 0 16px 12px;
+}
+.suggestion-chip {
+  padding: 5px 9px;
+  font-size: 10px;
+  background: rgba(167,139,250,0.08);
+  border: 1px solid rgba(167,139,250,0.2);
+  border-radius: 999px;
+  color: var(--accent-violet);
+  cursor: pointer; transition: all 0.2s;
+}
+.suggestion-chip:hover { background: rgba(167,139,250,0.15); }
+
+/* Modal */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-backdrop.show { display: flex; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  max-width: 600px; width: 100%; max-height: 88vh;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line-strong);
+  border-radius: 18px; overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: var(--shadow-deep);
+}
+.modal-head {
+  padding: 18px 24px; border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-head h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600;
+}
+.modal-close {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--line); background: transparent;
+  color: var(--ink-secondary); cursor: pointer; font-size: 16px;
+}
+.modal-body {
+  padding: 22px 24px; overflow-y: auto;
+  font-size: 13px; line-height: 1.7;
+}
+.modal-body h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; margin: 14px 0 6px; color: var(--accent-base);
+}
+.modal-body p { color: var(--ink-secondary); margin-bottom: 10px; }
+.modal-body code {
+  background: var(--bg-deep); padding: 2px 6px;
+  border-radius: 4px; font-size: 11px; color: var(--accent-gold);
+}
+.modal-body ul { margin: 6px 0 10px 18px; color: var(--ink-secondary); font-size: 12px; }
+
+/* Result modal special */
+.result-content {
+  text-align: center; padding: 30px 20px;
+}
+.result-icon {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 36px;
+  margin: 0 auto 16px;
+}
+.result-icon.success {
+  background: linear-gradient(135deg, var(--accent-success), #34d399);
+  box-shadow: 0 0 40px rgba(16,185,129,0.4);
+}
+.result-icon.fail {
+  background: linear-gradient(135deg, var(--accent-danger), #f87171);
+  box-shadow: 0 0 40px rgba(239,68,68,0.4);
+}
+.result-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px; font-weight: 600; margin-bottom: 8px;
+}
+.result-subtitle {
+  color: var(--ink-secondary); font-size: 14px; margin-bottom: 24px;
+}
+.result-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin-bottom: 24px;
+}
+.result-stat {
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+}
+.result-stat .label {
+  font-size: 10px; color: var(--ink-muted);
+  letter-spacing: 0.15em; text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+.result-stat .value {
+  font-size: 20px; font-weight: 700; margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.result-stat .value.gold { color: var(--accent-gold); }
+.result-stat .value.green { color: var(--accent-success); }
+.result-stat .value.red { color: var(--accent-danger); }
+
+.result-detail {
+  background: var(--bg-deep);
+  border-left: 3px solid var(--accent-violet);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  text-align: left;
+  margin-bottom: 20px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.result-detail strong { color: var(--ink-primary); }
+
+/* Toast */
+.toast {
+  position: fixed; top: 90px; right: 24px; z-index: 200;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  box-shadow: var(--shadow-deep);
+  display: none;
+  animation: slideIn 0.3s;
+  max-width: 300px;
+}
+.toast.show { display: block; }
+.toast.success { border-color: var(--accent-success); background: linear-gradient(135deg, rgba(16,185,129,0.15), var(--bg-elevated)); }
+.toast.error { border-color: var(--accent-danger); }
+.toast.warn { border-color: var(--accent-gold); }
+@keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+.deco-corner {
+  position: absolute;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 9px; letter-spacing: 0.3em;
+  color: var(--ink-muted); text-transform: uppercase;
+  pointer-events: none;
+}
+.deco-corner.tl { top: 12px; left: 16px; }
+
+/* Log */
+.log-list {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  display: flex; flex-direction: column; gap: 3px;
+  max-height: 140px; overflow-y: auto;
+}
+.log-entry {
+  padding: 6px 8px;
+  background: var(--bg-deep);
+  border-left: 2px solid var(--line);
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 8px; align-items: center;
+}
+.log-entry .time { color: var(--ink-muted); }
+.log-entry .text { color: var(--ink-secondary); font-size: 10px; }
+.log-entry .ph-tag { color: var(--accent-gold); font-weight: 700; }
+.log-entry.endpoint { border-left-color: var(--accent-gold); background: rgba(245,200,66,0.06); }
+.log-entry.fail { border-left-color: var(--accent-danger); background: rgba(239,68,68,0.06); }
+.log-entry.fail .text { color: #fca5a5; }
+
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-mark">⚗</div>
+    <div class="brand-text">
+      <h1>Виртуал Титрлэлтийн Лаборатори</h1>
+      <p>Алкалиметр · Ацидиметр · Сорилт</p>
+    </div>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active practice" data-app-mode="practice">
+      <span>🧪</span> Дадлага
+    </button>
+    <button class="mode-tab" data-app-mode="challenge">
+      <span>🏆</span> Сорилт
+    </button>
+  </div>
+
+  <div class="user-stats">
+    <div class="stat-pill level"><span class="label">Дэс:</span><span class="value" id="stat-level">1</span></div>
+    <div class="stat-pill score"><span class="label">Оноо:</span><span class="value" id="stat-score">0</span></div>
+    <div class="stat-pill success"><span class="label">✓</span><span class="value" id="stat-success">0</span></div>
+    <div class="stat-pill fail"><span class="label">✗</span><span class="value" id="stat-fail">0</span></div>
+    <button class="action-btn secondary" style="padding: 7px 12px; font-size: 11px; width: auto;" id="btn-help">📖 Заавар</button>
+  </div>
+</header>
+
+<main class="lab-container">
+
+  <!-- ============ LEFT: SETUP ============ -->
+  <aside class="panel">
+    <div class="panel-header">
+      <h2 id="setup-title">Туршилтын тохиргоо</h2>
+      <span class="badge" id="setup-badge">Setup</span>
+    </div>
+    <div class="panel-body">
+
+      <!-- Practice Mode Setup -->
+      <div id="practice-setup">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px;">
+          <button class="action-btn secondary mode-toggle active" data-titration="alkali" style="padding: 10px 6px; font-size: 11px;">
+            <div>
+              <div style="font-size: 12px;"> Алкалиметр</div>
+              <div style="font-size: 9px; color: var(--ink-muted); margin-top: 2px;">Шүлтээр титрлэх</div>
+            </div>
+          </button>
+          <button class="action-btn secondary mode-toggle" data-titration="acid" style="padding: 10px 6px; font-size: 11px;">
+            <div>
+              <div style="font-size: 12px;"> Ацидиметр</div>
+              <div style="font-size: 9px; color: var(--ink-muted); margin-top: 2px;">Хүчлээр титрлэх</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="section-label"><span class="num">1</span>Колбонд хийх дээж</div>
+        <div class="field">
+          <label>Бодис</label>
+          <select id="sel-analyte">
+            <option value="HCl">HCl — Давсны хүчил</option>
+            <option value="H2SO4">H₂SO₄ — Хүхрийн хүчил</option>
+            <option value="CH3COOH">CH₃COOH — Цууны хүчил</option>
+            <option value="HNO3">HNO₃ — Азотын хүчил</option>
+          </select>
+        </div>
+
+        <div class="range-field">
+          <div class="row">
+            <span class="name">Концентраци</span>
+            <span class="val" id="conc-analyte-val">0.10 М</span>
+          </div>
+          <input type="range" class="range-input" id="conc-analyte" min="0.01" max="1.0" step="0.01" value="0.10"/>
+        </div>
+
+        <div class="range-field">
+          <div class="row">
+            <span class="name">Эзлэхүүн (мл)</span>
+            <span class="val" id="vol-analyte-val">25 мл</span>
+          </div>
+          <input type="range" class="range-input" id="vol-analyte" min="10" max="100" step="5" value="25"/>
+        </div>
+
+        <div class="section-label"><span class="num">2</span>Буретанд хийх титрлэгч</div>
+        <div class="field">
+          <label>Бодис</label>
+          <select id="sel-titrant">
+            <option value="NaOH">NaOH — Натрийн гидроксид</option>
+            <option value="KOH">KOH — Калийн гидроксид</option>
+          </select>
+        </div>
+
+        <div class="range-field">
+          <div class="row">
+            <span class="name">Концентраци</span>
+            <span class="val" id="conc-titrant-val">0.10 М</span>
+          </div>
+          <input type="range" class="range-input" id="conc-titrant" min="0.01" max="1.0" step="0.01" value="0.10"/>
+        </div>
+
+        <div class="section-label"><span class="num">3</span>Индикатор</div>
+        <div class="indicator-grid" id="indicator-grid">
+          <div class="indicator-chip selected" data-indicator="phenolphthalein">
+            <div class="swatch" style="background: linear-gradient(90deg, #f0f0f0 0%, #f0f0f0 50%, #ff6bce 100%);"></div>
+            <span class="name">Фенолфталейн</span>
+            <div class="ph">8.2–10</div>
+          </div>
+          <div class="indicator-chip" data-indicator="methylorange">
+            <div class="swatch" style="background: linear-gradient(90deg, #ff4444 0%, #ff8844 50%, #ffcc44 100%);"></div>
+            <span class="name">Метилоранж</span>
+            <div class="ph">3.1–4.4</div>
+          </div>
+          <div class="indicator-chip" data-indicator="bromothymol">
+            <div class="swatch" style="background: linear-gradient(90deg, #ffdd44 0%, #44cc44 50%, #4488ff 100%);"></div>
+            <span class="name">Бромтимол</span>
+            <div class="ph">6.0–7.6</div>
+          </div>
+          <div class="indicator-chip" data-indicator="methylred">
+            <div class="swatch" style="background: linear-gradient(90deg, #ff5544 0%, #ffaa66 50%, #ffdd88 100%);"></div>
+            <span class="name">Метилред</span>
+            <div class="ph">4.4–6.2</div>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top: 18px;"><span class="num">4</span>Бэлтгэл</div>
+        <div id="prep-steps">
+          <div class="fill-step" id="step-fill-flask">
+            <div class="icon">①</div>
+            <div class="text">
+              <strong>Дээжийг колбонд хийх</strong>
+              Сонгосон бодис, эзлэхүүнийг колбонд цутгана
+            </div>
+          </div>
+          <div class="fill-step" id="step-fill-burette">
+            <div class="icon">②</div>
+            <div class="text">
+              <strong>Титрлэгчээр буретыг дүүргэх</strong>
+              0 мл-ээс эхлүүлж 50 мл хүртэл
+            </div>
+          </div>
+          <div class="fill-step" id="step-add-indicator">
+            <div class="icon">③</div>
+            <div class="text">
+              <strong>Индикатор нэмэх</strong>
+              Колбонд 2–3 дусал индикатор
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="action-btn secondary" id="btn-reset">↺ Шинэчлэх</button>
+          <button class="action-btn primary" id="btn-prepare">⚡ Бэлдэх</button>
+        </div>
+      </div>
+
+      <!-- Challenge Mode Setup -->
+      <div id="challenge-setup" style="display: none;">
+        <div style="background: linear-gradient(135deg, rgba(245,200,66,0.1), rgba(251,146,60,0.05)); border: 1px solid rgba(245,200,66,0.3); border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-size: 16px; margin-bottom: 4px;">🏆 Сорилтын горим</div>
+          <p style="font-size: 11px; color: var(--ink-secondary); line-height: 1.5;">
+            AI туслагч хаагдах ба та өөрөө тооцоо хийж, эквивалент цэгийг олно. Хэт их дусаавал бүтэлгүйтнэ. Зөв хийвэл өндөр оноо!
+          </p>
+        </div>
+
+        <div class="section-label"><span class="num">●</span>Хүндрэлийн зэрэг</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px;">
+          <button class="action-btn secondary diff-btn active" data-diff="easy" style="padding: 10px 4px; font-size: 11px;">
+            <div>
+              <div>🌱 Хялбар</div>
+              <div style="font-size: 9px; color: var(--ink-muted); margin-top: 2px;">±2 мл</div>
+            </div>
+          </button>
+          <button class="action-btn secondary diff-btn" data-diff="medium" style="padding: 10px 4px; font-size: 11px;">
+            <div>
+              <div>🔥 Дунд</div>
+              <div style="font-size: 9px; color: var(--ink-muted); margin-top: 2px;">±0.8 мл</div>
+            </div>
+          </button>
+          <button class="action-btn secondary diff-btn" data-diff="hard" style="padding: 10px 4px; font-size: 11px;">
+            <div>
+              <div>💎 Хэцүү</div>
+              <div style="font-size: 9px; color: var(--ink-muted); margin-top: 2px;">±0.3 мл</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="section-label"><span class="num">●</span>Сорилтын даалгавар</div>
+        <div id="challenge-task" style="background: var(--bg-deep); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 14px;">
+          <div style="font-size: 11px; color: var(--ink-muted); margin-bottom: 8px;">Сорилт эхлүүлэхийг хүлээж байна...</div>
+          <div style="font-size: 13px; color: var(--ink-secondary); line-height: 1.6;" id="challenge-task-text">
+            Хүндрэлийн зэргээ сонгож "Сорилт эхлүүлэх" товч дарна уу.
+          </div>
+        </div>
+
+        <div style="font-size: 11px; color: var(--ink-muted); margin-bottom: 14px; line-height: 1.6;">
+          <strong style="color: var(--accent-amber);">⚠ Дүрэм:</strong>
+          <ul style="margin: 6px 0 0 18px; font-size: 11px;">
+            <li>AI туслагч хаагдана</li>
+            <li>Эквивалент цэгийн утга харагдахгүй</li>
+            <li>Хугацаатай (3 минут)</li>
+            <li>Хэт их дусаах = бүтэлгүйтэл</li>
+          </ul>
+        </div>
+
+        <button class="action-btn gold" id="btn-start-challenge">⚡ Сорилт эхлүүлэх</button>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ============ CENTER: 3D STAGE ============ -->
+  <section class="lab-stage">
+    <span class="deco-corner tl">— Real-time 3D Lab —</span>
+
+    <div class="stage-header">
+      <div class="stage-card">
+        <div class="eyebrow">Идэвхтэй туршилт</div>
+        <h3 id="experiment-title">Шинэ туршилт</h3>
+      </div>
+      <div class="stage-card ph-readout">
+        <div class="eyebrow">pH утга</div>
+        <div class="value" id="ph-value">7.00</div>
+      </div>
+    </div>
+
+    <div class="challenge-banner" id="challenge-banner">
+      <div class="ico">🏆</div>
+      <div class="info">
+        <div class="label">Сорилт идэвхтэй</div>
+        <div class="text" id="challenge-banner-text">Та одоо сорилтын горимд орсон</div>
+      </div>
+      <div class="timer" id="challenge-timer">3:00</div>
+    </div>
+
+    <div id="three-canvas"></div>
+
+    <!-- Color reference -->
+    <div class="color-strip">
+      <div class="title">Индикаторын өнгөний муруй</div>
+      <div class="color-bar" id="color-bar"></div>
+      <div class="color-bar-labels">
+        <span>pH 0</span><span>7</span><span>14</span>
+      </div>
+    </div>
+
+    <div class="volume-overlay">
+      <div class="row">
+        <span class="lbl">Дусаасан:</span>
+        <span class="val" id="vol-titrant">0.00 мл</span>
+      </div>
+      <div class="row">
+        <span class="lbl">Колб дотор:</span>
+        <span class="val" id="vol-flask">25.00 мл</span>
+      </div>
+      <div class="row">
+        <span class="lbl">Хурд:</span>
+        <span class="val" id="drip-rate-display">Дунд</span>
+      </div>
+      <div class="row endpoint hidden" id="row-endpoint">
+        <span class="lbl">Эквив. цэг:</span>
+        <span class="val" id="endpoint-vol">—</span>
+      </div>
+      <div class="row target hidden" id="row-target">
+        <span class="lbl">Зорилт:</span>
+        <span class="val" id="target-vol">—</span>
+      </div>
+    </div>
+
+    <div class="stage-controls">
+      <button class="ctrl-btn" id="btn-add-drop" disabled>💧 1 дусал</button>
+      <button class="ctrl-btn" id="btn-continuous" disabled>▶ Тасралтгүй</button>
+      <button class="ctrl-btn danger" id="btn-finish" disabled>✓ Дууссан</button>
+      <div class="drip-slider-wrap">
+        <span class="lbl">Хурд</span>
+        <input type="range" class="drip-slider" id="drip-rate" min="1" max="10" value="5"/>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RIGHT: STATS + AI + LOG ============ -->
+  <aside class="right-stack">
+
+    <!-- Stats overview -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Статистик</h2>
+        <span class="badge">Stats</span>
+      </div>
+      <div class="panel-body" style="padding: 14px 16px;">
+        <div class="stats-grid">
+          <div class="stat-card attempts">
+            <div class="label">Нийт</div>
+            <div class="value" id="stats-total">0</div>
+            <div class="small">оролдлого</div>
+          </div>
+          <div class="stat-card success">
+            <div class="label">Амжилттай</div>
+            <div class="value" id="stats-success">0</div>
+            <div class="small" id="stats-success-pct">0%</div>
+          </div>
+          <div class="stat-card fail">
+            <div class="label">Бүтэлгүйтэл</div>
+            <div class="value" id="stats-fail">0</div>
+            <div class="small" id="stats-fail-pct">0%</div>
+          </div>
+          <div class="stat-card rate">
+            <div class="label">Дундаж алдаа</div>
+            <div class="value" id="stats-error">—</div>
+            <div class="small">мл</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-muted); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace;">
+            <span>Амжилтын хувь</span>
+            <span id="success-rate-label">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="success-progress" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI panel -->
+    <div class="panel ai-panel" style="position: relative;">
+      <div class="ai-locked-overlay" id="ai-lock">
+        <div class="lock-icon">🔒</div>
+        <h4>AI Туслагч хаалттай</h4>
+        <p>Сорилтын горимд AI ашиглах боломжгүй. Та өөрөө бодолд хүрэх хэрэгтэй!</p>
+      </div>
+      <div class="panel-header">
+        <h2 style="display: flex; align-items: center;">
+          <span class="ai-header-icon">✦</span>AI Туслагч
+        </h2>
+        <span class="badge" style="background: rgba(167,139,250,0.15); color: var(--accent-violet);">Claude</span>
+      </div>
+      <div class="ai-messages" id="ai-messages">
+        <div class="ai-message ai">
+          <span class="speaker">✦ AI Туслагч</span>
+          Сайн байна уу! Би таны титрлэлтийн туршилтад туслана. Жишээ нь: <em>"Эквивалент цэг гэж юу вэ?"</em>
+        </div>
+      </div>
+      <div class="ai-suggestions">
+        <button class="suggestion-chip" data-prompt="Эквивалент цэг гэж юу вэ?">Эквивалент цэг?</button>
+        <button class="suggestion-chip" data-prompt="Одоогийн туршилтын тооцоог тайлбарлаач">Тооцоо</button>
+        <button class="suggestion-chip" data-prompt="Энэ индикатор зөв сонгосон уу?">Индикатор?</button>
+      </div>
+      <div class="ai-input-wrap">
+        <textarea class="ai-input" id="ai-input" placeholder="Асуултаа бичнэ үү..." rows="1"></textarea>
+        <button class="ai-send" id="ai-send" title="Илгээх">➤</button>
+      </div>
+    </div>
+
+    <!-- Log panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Туршилтын явц</h2>
+        <span class="badge">Log</span>
+      </div>
+      <div class="panel-body" style="padding: 12px 16px;">
+        <div class="log-list" id="log-list">
+          <div class="log-entry"><span class="time">00:00</span><span class="text">Систем бэлэн</span><span class="ph-tag">—</span></div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+</main>
+
+<!-- HELP MODAL -->
+<div class="modal-backdrop" id="help-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📖 Заавар ба онол</h2>
+      <button class="modal-close" id="help-close">×</button>
+    </div>
+    <div class="modal-body">
+      <h3>🧪 Хоёр горим</h3>
+      <p><strong>Дадлагын горим:</strong> AI туслагч идэвхтэй, эквивалент цэг харагдана. Сурахад тохиромжтой.</p>
+      <p><strong>Сорилтын горим:</strong> AI хаагдана, эквивалент цэг нуугдана, хугацаатай. Та өөрөө онолыг ашиглан тооцоо хийнэ.</p>
+
+      <h3>📐 Үндсэн томьёо</h3>
+      <p>Эквивалент цэгт: <code>C₁V₁ = C₂V₂</code></p>
+      <ul>
+        <li><strong>C₁, V₁</strong> — Титрлэгчийн концентраци, эзлэхүүн</li>
+        <li><strong>C₂, V₂</strong> — Дээжийн концентраци, эзлэхүүн</li>
+      </ul>
+      <p>Хоёр протонт хүчилд (H₂SO₄): <code>2 × C(хүчил) × V(хүчил) = C(шүлт) × V(шүлт)</code></p>
+
+      <h3>🎨 Индикатор сонгох</h3>
+      <ul>
+        <li><strong>Фенолфталейн (8.2–10):</strong> Хүчтэй хүчил + хүчтэй шүлт, сул хүчил + хүчтэй шүлт. Өнгөгүйгээс ягаан болж өөрчлөгдөнө.</li>
+        <li><strong>Метилоранж (3.1–4.4):</strong> Хүчтэй хүчил + сул шүлт. Улаанаас шар болно.</li>
+        <li><strong>Бромтимол хөх (6.0–7.6):</strong> Хүчтэй хүчил + хүчтэй шүлтэд төвийн орчинд.</li>
+        <li><strong>Метилред (4.4–6.2):</strong> Сул шүлт титрлэхэд тохиромжтой.</li>
+      </ul>
+
+      <h3>🎯 Алхам алхмаар</h3>
+      <ul>
+        <li>Зүүн талд бодис, концентраци, эзлэхүүн, индикатор сонгоно</li>
+        <li>«Бэлдэх» дараад туршилт идэвхждэг</li>
+        <li>Дусал нэг бүрчлэн (нарийвчлал) эсвэл тасралтгүй (хурдан) дусаана</li>
+        <li>Колбон дахь өнгө өөрчлөгдөж эхлэх — анхаарлаа сэрэхэлж байна</li>
+        <li>Өнгө тогтвортой (5 секунд) болоход «Дууссан» товчоор дуусгана</li>
+      </ul>
+
+      <h3>🏆 Оноо ба амжилт</h3>
+      <ul>
+        <li><strong>Амжилт:</strong> Эквивалент цэгээс ±0.3–2 мл (зэргээс хамаарч)</li>
+        <li><strong>Бүтэлгүйтэл:</strong> Хэт их дусаасан, цаг хугацаа дууссан, аль эсвэл буруу зогсоосон</li>
+        <li><strong>Оноо:</strong> Алдаа бага бол өндөр, сорилтын горим x2 оноо</li>
+        <li>500 оноо тутамд дэс өснө</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="modal-backdrop" id="result-modal">
+  <div class="modal">
+    <div class="result-content">
+      <div class="result-icon" id="result-icon">🎯</div>
+      <div class="result-title" id="result-title">Амжилттай!</div>
+      <div class="result-subtitle" id="result-subtitle">Эквивалент цэгт зөв хүрлээ</div>
+
+      <div class="result-stats">
+        <div class="result-stat">
+          <div class="label">Дусаасан</div>
+          <div class="value gold" id="result-actual">0.00</div>
+        </div>
+        <div class="result-stat">
+          <div class="label">Зорилт</div>
+          <div class="value" id="result-target">0.00</div>
+        </div>
+        <div class="result-stat">
+          <div class="label">Алдаа</div>
+          <div class="value" id="result-error">0.00</div>
+        </div>
+      </div>
+
+      <div class="result-detail" id="result-detail"></div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button class="action-btn secondary" id="result-close">Хаах</button>
+        <button class="action-btn primary" id="result-retry">↻ Дахин туршилт</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===========================================================
+   STATE
+   =========================================================== */
+const STATE = {
+  appMode: 'practice',            // 'practice' | 'challenge'
+  difficulty: 'easy',             // 'easy' | 'medium' | 'hard'
+  titrationType: 'alkali',
+  analyte: { name: 'HCl', conc: 0.10, vol: 25, type: 'strong-acid' },
+  titrant: { name: 'NaOH', conc: 0.10, type: 'strong-base' },
+  indicator: 'phenolphthalein',
+
+  // Workflow state
+  prepared: false,
+  flaskFilled: false,
+  buretteFilled: false,
+  indicatorAdded: false,
+
+  running: false,
+  dripping: false,
+  dripMode: 'continuous',
+  dripRate: 5,
+
+  volumeAdded: 0,
+  pH: 7.00,
+  endpoint: null,
+  reachedEndpoint: false,
+  reachedEndpointZone: false,
+
+  colorStableTime: 0,
+  lastColorChange: 0,
+
+  // Challenge mode
+  challengeActive: false,
+  challengeTimeLeft: 180,
+  challengeTimer: null,
+  challengeTarget: null,         // hidden expected volume
+  challengeTolerance: 2,         // ±мл
+
+  // Stats
+  experimentNumber: 0,
+  successCount: 0,
+  failCount: 0,
+  totalError: 0,
+  score: 0,
+  level: 1,
+
+  log: [],
+  startTime: null,
+};
+
+const SUBSTANCE_TYPES = {
+  'HCl': 'strong-acid',
+  'H2SO4': 'strong-acid',
+  'HNO3': 'strong-acid',
+  'CH3COOH': 'weak-acid',
+  'NaOH': 'strong-base',
+  'KOH': 'strong-base',
+  'Na2CO3': 'weak-base',
+  'NH3': 'weak-base',
+};
+
+const PKA = { 'CH3COOH': 4.76 };
+const PKB = { 'NH3': 4.75 };
+
+/* ===========================================================
+   REAL INDICATOR COLOR CURVES
+   Each indicator has multi-step color transitions matching
+   real chemistry behavior
+   =========================================================== */
+const INDICATORS = {
+  'phenolphthalein': {
+    name: 'Фенолфталейн',
+    range: [8.2, 10.0],
+    colors: [
+      { pH: 0,    rgb: [255, 255, 255], a: 0.05 },  // colorless
+      { pH: 8.0,  rgb: [255, 255, 255], a: 0.05 },  // still colorless
+      { pH: 8.5,  rgb: [255, 200, 230], a: 0.4 },   // very faint pink
+      { pH: 9.0,  rgb: [255, 130, 200], a: 0.7 },   // pink
+      { pH: 10.0, rgb: [220, 50, 150],  a: 0.9 },   // bright fuchsia
+      { pH: 14,   rgb: [180, 30, 130],  a: 0.95 },  // deep magenta
+    ],
+  },
+  'methylorange': {
+    name: 'Метилоранж',
+    range: [3.1, 4.4],
+    colors: [
+      { pH: 0,    rgb: [220, 30, 30],   a: 0.85 },  // red
+      { pH: 3.0,  rgb: [220, 60, 40],   a: 0.85 },  // red
+      { pH: 3.5,  rgb: [240, 130, 60],  a: 0.85 },  // red-orange
+      { pH: 4.0,  rgb: [255, 170, 80],  a: 0.85 },  // orange
+      { pH: 4.4,  rgb: [255, 210, 100], a: 0.85 },  // yellow-orange
+      { pH: 7.0,  rgb: [255, 230, 120], a: 0.85 },  // yellow
+      { pH: 14,   rgb: [255, 220, 100], a: 0.85 },  // yellow
+    ],
+  },
+  'bromothymol': {
+    name: 'Бромтимол',
+    range: [6.0, 7.6],
+    colors: [
+      { pH: 0,    rgb: [240, 200, 50],  a: 0.85 },  // yellow
+      { pH: 6.0,  rgb: [240, 220, 70],  a: 0.85 },  // yellow
+      { pH: 6.7,  rgb: [180, 220, 90],  a: 0.85 },  // yellow-green
+      { pH: 7.0,  rgb: [100, 200, 120], a: 0.85 },  // green
+      { pH: 7.3,  rgb: [70, 160, 200],  a: 0.85 },  // blue-green
+      { pH: 7.6,  rgb: [50, 120, 220],  a: 0.85 },  // blue
+      { pH: 14,   rgb: [40, 90, 200],   a: 0.85 },  // deep blue
+    ],
+  },
+  'methylred': {
+    name: 'Метилред',
+    range: [4.4, 6.2],
+    colors: [
+      { pH: 0,    rgb: [200, 50, 50],   a: 0.85 },
+      { pH: 4.4,  rgb: [220, 80, 60],   a: 0.85 },
+      { pH: 5.0,  rgb: [240, 130, 90],  a: 0.85 },
+      { pH: 5.5,  rgb: [250, 180, 120], a: 0.85 },
+      { pH: 6.2,  rgb: [255, 220, 130], a: 0.85 },
+      { pH: 14,   rgb: [255, 230, 140], a: 0.85 },
+    ],
+  },
+};
+
+/* ===========================================================
+   pH CALCULATION
+   =========================================================== */
+function calcPH() {
+  const Va = STATE.analyte.vol / 1000;
+  const Ca = STATE.analyte.conc;
+  const Vb = STATE.volumeAdded / 1000;
+  const Cb = STATE.titrant.conc;
+
+  const aType = SUBSTANCE_TYPES[STATE.analyte.name];
+  const bType = SUBSTANCE_TYPES[STATE.titrant.name];
+
+  const acidProtons = STATE.analyte.name === 'H2SO4' ? 2 : 1;
+
+  // Determine acid/base based on titration type
+  let molesAcid, molesBase;
+
+  if (STATE.titrationType === 'alkali') {
+    // Acid in flask, base in burette
+    molesAcid = Ca * Va * acidProtons;
+    molesBase = Cb * Vb;
+  } else {
+    // Base in flask, acid in burette
+    molesBase = Ca * Va;
+    molesAcid = Cb * Vb;
+  }
+
+  const totalV = Va + Vb;
+  if (totalV === 0) return 7;
+
+  const isStrongA = STATE.titrationType === 'alkali' ? aType === 'strong-acid' : bType === 'strong-acid';
+  const isWeakA = STATE.titrationType === 'alkali' ? aType === 'weak-acid' : bType === 'weak-acid';
+  const isStrongB = STATE.titrationType === 'alkali' ? bType === 'strong-base' : aType === 'strong-base';
+
+  // Strong acid + Strong base
+  if (isStrongA && isStrongB) {
+    if (molesAcid > molesBase) {
+      const H = (molesAcid - molesBase) / totalV;
+      return Math.max(0.5, -Math.log10(Math.max(1e-14, H)));
+    } else if (molesBase > molesAcid) {
+      const OH = (molesBase - molesAcid) / totalV;
+      return Math.min(13.5, 14 + Math.log10(Math.max(1e-14, OH)));
+    } else {
+      return 7;
+    }
+  }
+
+  // Weak acid + Strong base
+  if (isWeakA && isStrongB) {
+    const acidName = STATE.titrationType === 'alkali' ? STATE.analyte.name : STATE.titrant.name;
+    const pKa = PKA[acidName] || 4.76;
+    if (molesBase === 0) {
+      return 0.5 * (pKa - Math.log10(Ca));
+    }
+    if (molesBase < molesAcid * 0.999) {
+      const ratio = molesBase / (molesAcid - molesBase);
+      return pKa + Math.log10(Math.max(0.001, ratio));
+    } else if (Math.abs(molesBase - molesAcid) < molesAcid * 0.001) {
+      const Csalt = molesAcid / totalV;
+      const pKb = 14 - pKa;
+      const OH = Math.sqrt(Math.pow(10, -pKb) * Csalt);
+      return 14 + Math.log10(OH);
+    } else {
+      const OH = (molesBase - molesAcid) / totalV;
+      return Math.min(13.5, 14 + Math.log10(OH));
+    }
+  }
+
+  // Default fallback
+  if (molesAcid > molesBase) {
+    const H = Math.max(1e-14, (molesAcid - molesBase) / totalV);
+    return Math.max(0.5, -Math.log10(H));
+  } else {
+    const OH = Math.max(1e-14, (molesBase - molesAcid) / totalV);
+    return Math.min(13.5, 14 + Math.log10(OH));
+  }
+}
+
+function calcEndpointVolume() {
+  const acidProtons = STATE.analyte.name === 'H2SO4' ? 2 : 1;
+  if (STATE.titrationType === 'alkali') {
+    return (STATE.analyte.conc * STATE.analyte.vol * acidProtons) / STATE.titrant.conc;
+  } else {
+    return (STATE.analyte.conc * STATE.analyte.vol) / (STATE.titrant.conc * acidProtons);
+  }
+}
+
+/* ===========================================================
+   INDICATOR COLOR (real multi-step interpolation)
+   =========================================================== */
+function getIndicatorColor(pH) {
+  const ind = INDICATORS[STATE.indicator];
+  const colors = ind.colors;
+
+  // If indicator not yet added, return clear water-ish color
+  if (!STATE.indicatorAdded && !STATE.prepared) {
+    return { rgb: [240, 245, 255], a: 0.15 };
+  }
+
+  // Find surrounding pH stops
+  for (let i = 0; i < colors.length - 1; i++) {
+    if (pH >= colors[i].pH && pH <= colors[i+1].pH) {
+      const t = (pH - colors[i].pH) / (colors[i+1].pH - colors[i].pH);
+      const lo = colors[i], hi = colors[i+1];
+      return {
+        rgb: [
+          lo.rgb[0] + (hi.rgb[0] - lo.rgb[0]) * t,
+          lo.rgb[1] + (hi.rgb[1] - lo.rgb[1]) * t,
+          lo.rgb[2] + (hi.rgb[2] - lo.rgb[2]) * t,
+        ],
+        a: lo.a + (hi.a - lo.a) * t,
+      };
+    }
+  }
+  // Out of range
+  if (pH < colors[0].pH) return { rgb: colors[0].rgb, a: colors[0].a };
+  return { rgb: colors[colors.length-1].rgb, a: colors[colors.length-1].a };
+}
+
+/* ===========================================================
+   THREE.JS 3D SCENE
+   =========================================================== */
+let scene, camera, renderer, clock;
+let flask, flaskLiquid, flaskLiquidTop, burette, buretteLiquid;
+let droplets = [];
+let splashParticles = [];
+let measurementMarks = [];
+let mouseDown = false, mouseX = 0, mouseY = 0;
+let cameraAngleY = 0, cameraAngleX = 0.2;
+const cameraRadius = 5.5;
+
+function initThree() {
+  const container = document.getElementById('three-canvas');
+  const w = container.clientWidth;
+  const h = container.clientHeight || 520;
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0a0e1a, 8, 22);
+
+  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+  updateCameraPosition();
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  // LIGHTING
+  scene.add(new THREE.AmbientLight(0xb8c5e0, 0.5));
+
+  const keyLight = new THREE.DirectionalLight(0xffeacc, 0.85);
+  keyLight.position.set(3, 5, 4);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(1024, 1024);
+  scene.add(keyLight);
+
+  const fillLight = new THREE.DirectionalLight(0xa78bfa, 0.4);
+  fillLight.position.set(-3, 3, 2);
+  scene.add(fillLight);
+
+  const rimLight = new THREE.PointLight(0x4ecdc4, 0.5, 10);
+  rimLight.position.set(0, 1, -3);
+  scene.add(rimLight);
+
+  // BENCH
+  const benchGeo = new THREE.BoxGeometry(8, 0.1, 5);
+  const benchMat = new THREE.MeshStandardMaterial({ color: 0x1a2238, metalness: 0.4, roughness: 0.6 });
+  const bench = new THREE.Mesh(benchGeo, benchMat);
+  bench.position.y = -0.05;
+  bench.receiveShadow = true;
+  scene.add(bench);
+
+  const gridHelper = new THREE.GridHelper(6, 12, 0x4ecdc4, 0x2a3450);
+  gridHelper.position.y = 0.001;
+  gridHelper.material.opacity = 0.15;
+  gridHelper.material.transparent = true;
+  scene.add(gridHelper);
+
+  createBurette();
+  createFlask();
+  createStand();
+  createBackgroundParticles();
+
+  clock = new THREE.Clock();
+  animate();
+
+  // Camera controls
+  container.addEventListener('mousedown', e => { mouseDown = true; mouseX = e.clientX; mouseY = e.clientY; });
+  window.addEventListener('mouseup', () => { mouseDown = false; });
+  window.addEventListener('mousemove', e => {
+    if (!mouseDown) return;
+    const dx = e.clientX - mouseX;
+    const dy = e.clientY - mouseY;
+    cameraAngleY -= dx * 0.005;
+    cameraAngleX = Math.max(-0.3, Math.min(0.8, cameraAngleX + dy * 0.005));
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    updateCameraPosition();
+  });
+
+  window.addEventListener('resize', onResize);
+}
+
+function updateCameraPosition() {
+  const x = Math.sin(cameraAngleY) * Math.cos(cameraAngleX) * cameraRadius;
+  const z = Math.cos(cameraAngleY) * Math.cos(cameraAngleX) * cameraRadius;
+  const y = 1.4 + Math.sin(cameraAngleX) * cameraRadius * 0.3;
+  camera.position.set(x, y, z);
+  camera.lookAt(0, 0.7, 0);
+}
+
+function makeTextSprite(text, opts = {}) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = opts.color || 'rgba(255,255,255,0.85)';
+  ctx.font = `${opts.bold ? 'bold ' : ''}${opts.size || 22}px JetBrains Mono, monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 64, 32);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(0.35, 0.18, 1);
+  return sprite;
+}
+
+function createBurette() {
+  const buretteGroup = new THREE.Group();
+
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff, metalness: 0, roughness: 0.05,
+    transmission: 0.95, thickness: 0.2,
+    transparent: true, opacity: 0.25,
+    clearcoat: 1, clearcoatRoughness: 0.05,
+    side: THREE.DoubleSide,
+  });
+
+  // Main tube
+  const tubeGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.4, 32, 1, true);
+  const tube = new THREE.Mesh(tubeGeo, glassMat);
+  tube.position.y = 1.6;
+  buretteGroup.add(tube);
+
+  const topGeo = new THREE.CylinderGeometry(0.08, 0.12, 0.15, 32);
+  const top = new THREE.Mesh(topGeo, glassMat);
+  top.position.y = 2.85;
+  buretteGroup.add(top);
+
+  const bottomNarrowGeo = new THREE.CylinderGeometry(0.12, 0.04, 0.3, 32);
+  const bottomNarrow = new THREE.Mesh(bottomNarrowGeo, glassMat);
+  bottomNarrow.position.y = 0.25;
+  buretteGroup.add(bottomNarrow);
+
+  // Stopcock
+  const valveGeo = new THREE.BoxGeometry(0.28, 0.1, 0.18);
+  const valveMat = new THREE.MeshStandardMaterial({ color: 0xf5c842, metalness: 0.7, roughness: 0.3 });
+  const valve = new THREE.Mesh(valveGeo, valveMat);
+  valve.position.y = 0.05;
+  buretteGroup.add(valve);
+
+  const tipGeo = new THREE.CylinderGeometry(0.025, 0.015, 0.2, 16);
+  const tip = new THREE.Mesh(tipGeo, glassMat);
+  tip.position.y = -0.15;
+  buretteGroup.add(tip);
+
+  // Liquid - starts empty
+  const liqGeo = new THREE.CylinderGeometry(0.115, 0.115, 2.2, 32);
+  const liqMat = new THREE.MeshPhysicalMaterial({
+    color: 0xa0d8ff, transparent: true, opacity: 0.6,
+    transmission: 0.3, roughness: 0.1, metalness: 0,
+  });
+  buretteLiquid = new THREE.Mesh(liqGeo, liqMat);
+  buretteLiquid.position.y = 1.6;
+  buretteLiquid.scale.y = 0.001; // start empty
+  buretteGroup.add(buretteLiquid);
+
+  // ====== PROFESSIONAL MEASUREMENT MARKS ======
+  // Burette: 0 at top, 50 at bottom (typical)
+  const tubeTop = 2.78;     // y=2.78 = 0 mL mark
+  const tubeBot = 0.42;     // y=0.42 = 50 mL mark
+  const tubeRange = tubeTop - tubeBot;
+
+  for (let mL = 0; mL <= 50; mL += 1) {
+    const y = tubeTop - (mL / 50) * tubeRange;
+    const isMajor = mL % 5 === 0;
+    const isMid = mL % 5 === 0;
+
+    const tickLen = isMajor ? 0.06 : (mL % 1 === 0 ? 0.025 : 0.015);
+    const tickGeo = new THREE.BoxGeometry(tickLen, 0.004, 0.005);
+    const tickMat = new THREE.MeshBasicMaterial({ color: isMajor ? 0xffffff : 0x999999 });
+    const tick = new THREE.Mesh(tickGeo, tickMat);
+    tick.position.set(0.13 + tickLen/2, y, 0.12);
+    buretteGroup.add(tick);
+
+    // Add labels for major ticks
+    if (isMajor) {
+      const label = makeTextSprite(mL.toString(), { size: 18, bold: true, color: 'rgba(255,255,255,0.9)' });
+      label.position.set(0.32, y, 0.12);
+      label.scale.set(0.18, 0.1, 1);
+      buretteGroup.add(label);
+    }
+  }
+
+  // Burette label "мл" at top
+  const buretteLabel = makeTextSprite('БУРЕТ 50мл', { size: 14, color: 'rgba(245,200,66,0.95)' });
+  buretteLabel.position.set(-0.3, 2.4, 0.15);
+  buretteLabel.scale.set(0.4, 0.14, 1);
+  buretteGroup.add(buretteLabel);
+
+  buretteGroup.position.set(0, 0, 0);
+  burette = buretteGroup;
+  scene.add(burette);
+}
+
+function createFlask() {
+  const flaskGroup = new THREE.Group();
+
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff, metalness: 0, roughness: 0.04,
+    transmission: 0.95, thickness: 0.15,
+    transparent: true, opacity: 0.3, clearcoat: 1,
+    side: THREE.DoubleSide,
+  });
+
+  // Erlenmeyer body
+  const bodyGeo = new THREE.CylinderGeometry(0.22, 0.55, 0.85, 32, 8, true);
+  const body = new THREE.Mesh(bodyGeo, glassMat);
+  body.position.y = -0.35;
+  flaskGroup.add(body);
+
+  const neckGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.25, 32, 1, true);
+  const neck = new THREE.Mesh(neckGeo, glassMat);
+  neck.position.y = 0.2;
+  flaskGroup.add(neck);
+
+  const baseGeo = new THREE.CircleGeometry(0.55, 32);
+  const base = new THREE.Mesh(baseGeo, glassMat);
+  base.rotation.x = -Math.PI / 2;
+  base.position.y = -0.78;
+  flaskGroup.add(base);
+
+  const rimGeo = new THREE.TorusGeometry(0.18, 0.015, 8, 32);
+  const rim = new THREE.Mesh(rimGeo, glassMat);
+  rim.rotation.x = Math.PI / 2;
+  rim.position.y = 0.32;
+  flaskGroup.add(rim);
+
+  // ===== FLASK MEASUREMENT MARKS =====
+  // Erlenmeyer 250mL: marks at 50, 100, 150, 200, 250
+  const flaskBot = -0.78;
+  const flaskTop = 0.0;
+  for (const mL of [25, 50, 100, 150, 200]) {
+    const t = mL / 250;
+    const y = flaskBot + t * (flaskTop - flaskBot);
+    // Approx radius at this height
+    const r = 0.55 + (0.22 - 0.55) * t;
+    const tickGeo = new THREE.BoxGeometry(0.04, 0.003, 0.006);
+    const tickMat = new THREE.MeshBasicMaterial({ color: 0xcccccc });
+    const tick = new THREE.Mesh(tickGeo, tickMat);
+    tick.position.set(r + 0.02, y, 0);
+    flaskGroup.add(tick);
+
+    const label = makeTextSprite(mL + 'мл', { size: 12, color: 'rgba(255,255,255,0.6)' });
+    label.position.set(r + 0.18, y, 0);
+    label.scale.set(0.22, 0.09, 1);
+    flaskGroup.add(label);
+  }
+
+  // Liquid - starts very small/invisible
+  const liqHeight = 0.5;
+  const liqGeo = new THREE.CylinderGeometry(0.18, 0.42, liqHeight, 64, 24, true);
+  const liqMat = new THREE.MeshPhysicalMaterial({
+    color: 0xeeeeff, transparent: true, opacity: 0.0,
+    transmission: 0.2, roughness: 0.15, metalness: 0,
+    emissive: 0x000000,
+  });
+  flaskLiquid = new THREE.Mesh(liqGeo, liqMat);
+  flaskLiquid.position.y = -0.45;
+  flaskLiquid.scale.y = 0.001; // start empty
+  flaskGroup.add(flaskLiquid);
+
+  const liqBottomGeo = new THREE.CircleGeometry(0.42, 64);
+  const liqBottom = new THREE.Mesh(liqBottomGeo, liqMat);
+  liqBottom.rotation.x = -Math.PI / 2;
+  liqBottom.position.y = -0.7;
+  flaskGroup.add(liqBottom);
+
+  const liqTopGeo = new THREE.CircleGeometry(0.18, 64);
+  flaskLiquidTop = new THREE.Mesh(liqTopGeo, liqMat);
+  flaskLiquidTop.rotation.x = -Math.PI / 2;
+  flaskLiquidTop.position.y = -0.2;
+  flaskGroup.add(flaskLiquidTop);
+
+  flaskLiquid.userData.bottomMesh = liqBottom;
+  flaskLiquid.userData.topMesh = flaskLiquidTop;
+
+  // Flask label
+  const flaskLabel = makeTextSprite('250мл КОЛБ', { size: 13, color: 'rgba(78,205,196,0.95)' });
+  flaskLabel.position.set(-0.4, -0.6, 0.45);
+  flaskLabel.scale.set(0.45, 0.13, 1);
+  flaskGroup.add(flaskLabel);
+
+  flaskGroup.position.set(0, 0.85, 0);
+  flask = flaskGroup;
+  scene.add(flask);
+}
+
+function createStand() {
+  const metalMat = new THREE.MeshStandardMaterial({ color: 0x444a5a, metalness: 0.9, roughness: 0.3 });
+
+  const rodGeo = new THREE.CylinderGeometry(0.025, 0.025, 3.5, 16);
+  const rod = new THREE.Mesh(rodGeo, metalMat);
+  rod.position.set(-0.7, 1.75, -0.2);
+  scene.add(rod);
+
+  const baseGeo = new THREE.BoxGeometry(0.9, 0.06, 0.5);
+  const base = new THREE.Mesh(baseGeo, metalMat);
+  base.position.set(-0.7, 0.03, -0.2);
+  base.castShadow = true;
+  scene.add(base);
+
+  const clampGeo = new THREE.BoxGeometry(0.7, 0.06, 0.08);
+  const clamp = new THREE.Mesh(clampGeo, metalMat);
+  clamp.position.set(-0.35, 1.4, 0);
+  scene.add(clamp);
+
+  const ringGeo = new THREE.TorusGeometry(0.16, 0.025, 8, 24);
+  const ring = new THREE.Mesh(ringGeo, metalMat);
+  ring.position.set(0, 1.4, 0);
+  scene.add(ring);
+
+  // ===== HEIGHT RULER ON STAND =====
+  for (let cm = 0; cm <= 60; cm += 5) {
+    const y = 0.1 + (cm / 60) * 3.3;
+    const tickGeo = new THREE.BoxGeometry(0.04, 0.003, 0.006);
+    const tickMat = new THREE.MeshBasicMaterial({ color: 0x666666 });
+    const tick = new THREE.Mesh(tickGeo, tickMat);
+    tick.position.set(-0.65, y, -0.18);
+    scene.add(tick);
+    if (cm % 10 === 0) {
+      const label = makeTextSprite(cm + 'см', { size: 10, color: 'rgba(160,168,189,0.7)' });
+      label.position.set(-0.85, y, -0.18);
+      label.scale.set(0.16, 0.08, 1);
+      scene.add(label);
+    }
+  }
+}
+
+function createBackgroundParticles() {
+  const particleCount = 30;
+  const particleGeo = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  for (let i = 0; i < particleCount; i++) {
+    positions[i*3]     = (Math.random() - 0.5) * 8;
+    positions[i*3 + 1] = Math.random() * 4;
+    positions[i*3 + 2] = (Math.random() - 0.5) * 5 - 2;
+  }
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const particleMat = new THREE.PointsMaterial({
+    color: 0x4ecdc4, size: 0.025,
+    transparent: true, opacity: 0.4,
+    blending: THREE.AdditiveBlending,
+  });
+  const particles = new THREE.Points(particleGeo, particleMat);
+  scene.add(particles);
+  particles.userData.update = (t) => {
+    const pos = particles.geometry.attributes.position.array;
+    for (let i = 0; i < particleCount; i++) {
+      pos[i*3 + 1] += 0.002 * Math.sin(t + i);
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+  };
+  scene.userData.particles = particles;
+}
+
+function onResize() {
+  const container = document.getElementById('three-canvas');
+  const w = container.clientWidth;
+  const h = container.clientHeight || 520;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+
+/* ===========================================================
+   ANIMATIONS: DROPLETS, SPLASH, WAVES
+   =========================================================== */
+function spawnDroplet(color = null) {
+  const c = color || getIndicatorColor(STATE.pH);
+  const dropGeo = new THREE.SphereGeometry(0.025, 12, 12);
+  const dropMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(0xa0d8ff),
+    transparent: true, opacity: 0.85,
+    transmission: 0.5, roughness: 0.05,
+  });
+  const drop = new THREE.Mesh(dropGeo, dropMat);
+  drop.position.set(0, 0.7, 0);
+  drop.userData = { velocity: 0, spawnTime: clock.getElapsedTime() };
+  scene.add(drop);
+  droplets.push(drop);
+}
+
+function spawnSplash(x, y, z, rgb) {
+  const count = 10;
+  for (let i = 0; i < count; i++) {
+    const partGeo = new THREE.SphereGeometry(0.012 + Math.random() * 0.008, 6, 6);
+    const partMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(rgb[0]/255, rgb[1]/255, rgb[2]/255),
+      transparent: true, opacity: 0.9,
+    });
+    const part = new THREE.Mesh(partGeo, partMat);
+    part.position.set(x, y, z);
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+    const speed = 0.4 + Math.random() * 0.6;
+    part.userData = {
+      vx: Math.cos(angle) * speed * 0.3,
+      vy: 0.5 + Math.random() * 0.7,
+      vz: Math.sin(angle) * speed * 0.3,
+      life: 1.0,
+    };
+    scene.add(part);
+    splashParticles.push(part);
+  }
+}
+
+function updateDroplets(dt) {
+  for (let i = droplets.length - 1; i >= 0; i--) {
+    const d = droplets[i];
+    d.userData.velocity += dt * 4;
+    d.position.y -= d.userData.velocity * dt;
+    if (d.position.y <= 0.65) {
+      const c = getIndicatorColor(STATE.pH);
+      spawnSplash(d.position.x, 0.65, d.position.z, c.rgb);
+      scene.remove(d);
+      droplets.splice(i, 1);
+      flaskLiquid.userData.waveImpact = 1.0;
+    }
+  }
+}
+
+function updateSplash(dt) {
+  for (let i = splashParticles.length - 1; i >= 0; i--) {
+    const p = splashParticles[i];
+    p.userData.vy -= dt * 6;
+    p.position.x += p.userData.vx * dt;
+    p.position.y += p.userData.vy * dt;
+    p.position.z += p.userData.vz * dt;
+    p.userData.life -= dt * 1.5;
+    p.material.opacity = Math.max(0, p.userData.life);
+    if (p.userData.life <= 0) {
+      scene.remove(p);
+      splashParticles.splice(i, 1);
+    }
+  }
+}
+
+function updateLiquidColor() {
+  if (!flaskLiquid) return;
+  const c = getIndicatorColor(STATE.pH);
+  flaskLiquid.material.color.setRGB(c.rgb[0]/255, c.rgb[1]/255, c.rgb[2]/255);
+  flaskLiquid.material.opacity = c.a;
+
+  // Glow when near endpoint
+  const ind = INDICATORS[STATE.indicator];
+  if (STATE.pH >= ind.range[0] && STATE.pH <= ind.range[1]) {
+    flaskLiquid.material.emissive = new THREE.Color(c.rgb[0]/255*0.2, c.rgb[1]/255*0.2, c.rgb[2]/255*0.2);
+  } else {
+    flaskLiquid.material.emissive = new THREE.Color(0,0,0);
+  }
+}
+
+function updateLiquidWaves(t) {
+  if (!flaskLiquid?.userData.topMesh) return;
+  const top = flaskLiquid.userData.topMesh;
+  const impact = flaskLiquid.userData.waveImpact || 0;
+  // Position wave: original height + sine wave + impact ripple
+  const baseY = -0.2;
+  top.position.y = baseY + Math.sin(t * 2) * 0.005 + impact * 0.025 * Math.sin(t * 25);
+  flaskLiquid.userData.waveImpact = Math.max(0, impact - 0.04);
+}
+
+function updateBuretteLiquid() {
+  // Burette: starts at full (50 mL) and decreases
+  const fullVol = 50;
+  const remaining = STATE.buretteFilled ? Math.max(0, fullVol - STATE.volumeAdded) : 0;
+  const fraction = remaining / fullVol;
+  // Scale from top: liquid fills tube from bottom, top recedes
+  buretteLiquid.scale.y = Math.max(0.001, fraction);
+  buretteLiquid.position.y = 1.6 - (1 - fraction) * 1.1;
+}
+
+function updateFlaskLiquid() {
+  // Flask: starts empty, gets filled from analyte volume + drops
+  if (!flaskLiquid) return;
+  const totalMl = (STATE.flaskFilled ? STATE.analyte.vol : 0) + STATE.volumeAdded;
+  // Map: 25mL = scale 1, 50mL = scale 1.4, 100mL = scale 1.8, etc.
+  // Use sqrt scaling because of cone shape
+  const fraction = STATE.flaskFilled ? Math.min(1.4, Math.sqrt(totalMl / 25)) : 0.001;
+  flaskLiquid.scale.y = fraction;
+  if (flaskLiquid.userData.topMesh) {
+    // Move top mesh up as level rises
+    flaskLiquid.userData.topMesh.position.y = -0.45 + fraction * 0.25;
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, clock.getDelta());
+  const t = clock.getElapsedTime();
+
+  // Continuous dripping
+  if (STATE.running && STATE.dripMode === 'continuous' && STATE.dripping) {
+    const interval = 1.2 - (STATE.dripRate * 0.1);
+    if (!STATE.lastDripTime || t - STATE.lastDripTime > interval) {
+      STATE.lastDripTime = t;
+      doDrip();
+    }
+  }
+
+  updateDroplets(dt);
+  updateSplash(dt);
+  updateLiquidWaves(t);
+
+  if (scene.userData.particles?.userData?.update) {
+    scene.userData.particles.userData.update(t);
+  }
+
+  // Auto-rotation when not interacted
+  if (!mouseDown && !STATE.running) {
+    cameraAngleY += 0.0008;
+    updateCameraPosition();
+  }
+
+  renderer.render(scene, camera);
+}
+
+/* ===========================================================
+   TITRATION LOGIC
+   =========================================================== */
+function doDrip() {
+  if (!STATE.running) return;
+
+  // Drop volume varies with rate (0.05 - 0.55 mL)
+  const dripVol = 0.05 + (STATE.dripRate / 10) * 0.5;
+  STATE.volumeAdded += dripVol;
+
+  spawnDroplet();
+
+  STATE.pH = calcPH();
+
+  // In challenge mode, check for FAILURE: way past endpoint
+  if (STATE.challengeActive && STATE.challengeTarget) {
+    const overshoot = STATE.volumeAdded - STATE.challengeTarget;
+    const failThreshold = STATE.challengeTolerance * 3; // 3x the tolerance = fail
+    if (overshoot > failThreshold) {
+      finishExperiment(false, 'overshoot');
+      return;
+    }
+  }
+
+  // Endpoint zone detection
+  const ind = INDICATORS[STATE.indicator];
+  const inIndicatorRange = STATE.pH >= ind.range[0] && STATE.pH <= ind.range[1];
+
+  if (inIndicatorRange && !STATE.reachedEndpointZone) {
+    STATE.reachedEndpointZone = true;
+    STATE.lastColorChange = t;
+    addLog('🎯 Өнгө өөрчлөгдөж эхлэв', false);
+    if (STATE.appMode === 'practice') {
+      showToast('🎯 Эквивалент цэгт ойртож байна — анхааралтай!', 'warn');
+    }
+  }
+
+  if (STATE.pH > ind.range[1] && !STATE.reachedEndpoint) {
+    STATE.reachedEndpoint = true;
+    addLog(`✓ Эквивалент цэг даварсан (${STATE.volumeAdded.toFixed(2)} мл)`, true);
+  }
+
+  updateUI();
+  updateBuretteLiquid();
+  updateFlaskLiquid();
+}
+
+function updateUI() {
+  document.getElementById('vol-titrant').textContent = STATE.volumeAdded.toFixed(2) + ' мл';
+  document.getElementById('vol-flask').textContent =
+    ((STATE.flaskFilled ? STATE.analyte.vol : 0) + STATE.volumeAdded).toFixed(2) + ' мл';
+  document.getElementById('ph-value').textContent = STATE.pH.toFixed(2);
+
+  // pH color
+  const phEl = document.getElementById('ph-value');
+  if (STATE.pH < 6) phEl.style.background = 'linear-gradient(135deg, #ff6b9d, #fb923c)';
+  else if (STATE.pH > 8) phEl.style.background = 'linear-gradient(135deg, #4ecdc4, #a78bfa)';
+  else phEl.style.background = 'linear-gradient(135deg, #f5c842, #fb923c)';
+  phEl.style.webkitBackgroundClip = 'text';
+  phEl.style.backgroundClip = 'text';
+  phEl.style.color = 'transparent';
+
+  // Color reference bar
+  updateColorBar();
+
+  updateLiquidColor();
+}
+
+function updateColorBar() {
+  const bar = document.getElementById('color-bar');
+  if (!bar) return;
+  // Build gradient from colors at pH 0, 4, 7, 10, 14
+  const pHPoints = [0, 2, 4, 6, 7, 8, 10, 12, 14];
+  const stops = pHPoints.map(p => {
+    const oldPH = STATE.pH;
+    STATE.pH = p;
+    const c = getIndicatorColor(p);
+    STATE.pH = oldPH;
+    const pct = (p / 14) * 100;
+    return `rgba(${Math.round(c.rgb[0])},${Math.round(c.rgb[1])},${Math.round(c.rgb[2])},${c.a + 0.1}) ${pct}%`;
+  }).join(', ');
+  bar.style.background = `linear-gradient(90deg, ${stops})`;
+  bar.style.setProperty('--ph-pos', `${(STATE.pH / 14) * 100}%`);
+}
+
+function addLog(msg, isEndpoint = false, isFail = false) {
+  const elapsed = STATE.startTime ? Math.floor((Date.now() - STATE.startTime) / 1000) : 0;
+  const min = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const sec = String(elapsed % 60).padStart(2, '0');
+  const time = `${min}:${sec}`;
+  STATE.log.push({ time, msg, isEndpoint, isFail });
+
+  const logList = document.getElementById('log-list');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry' + (isEndpoint ? ' endpoint' : '') + (isFail ? ' fail' : '');
+  entry.innerHTML = `
+    <span class="time">${time}</span>
+    <span class="text">${msg}</span>
+    <span class="ph-tag">${STATE.pH.toFixed(2)}</span>
+  `;
+  logList.appendChild(entry);
+  logList.scrollTop = logList.scrollHeight;
+  while (logList.children.length > 30) logList.removeChild(logList.firstChild);
+}
+
+function updateStats() {
+  document.getElementById('stat-score').textContent = STATE.score;
+  document.getElementById('stat-success').textContent = STATE.successCount;
+  document.getElementById('stat-fail').textContent = STATE.failCount;
+  STATE.level = Math.floor(STATE.score / 500) + 1;
+  document.getElementById('stat-level').textContent = STATE.level;
+
+  const total = STATE.successCount + STATE.failCount;
+  const successPct = total > 0 ? Math.round((STATE.successCount / total) * 100) : 0;
+  const failPct = total > 0 ? Math.round((STATE.failCount / total) * 100) : 0;
+  const avgErr = STATE.successCount > 0 ? (STATE.totalError / STATE.successCount).toFixed(2) : '—';
+
+  document.getElementById('stats-total').textContent = total;
+  document.getElementById('stats-success').textContent = STATE.successCount;
+  document.getElementById('stats-fail').textContent = STATE.failCount;
+  document.getElementById('stats-success-pct').textContent = successPct + '%';
+  document.getElementById('stats-fail-pct').textContent = failPct + '%';
+  document.getElementById('stats-error').textContent = avgErr;
+  document.getElementById('success-rate-label').textContent = successPct + '%';
+  document.getElementById('success-progress').style.width = successPct + '%';
+
+  saveProgress();
+}
+
+/* ===========================================================
+   FINISH EXPERIMENT (success/fail)
+   =========================================================== */
+function finishExperiment(success, reason = '') {
+  STATE.dripping = false;
+  STATE.running = false;
+  if (STATE.challengeTimer) {
+    clearInterval(STATE.challengeTimer);
+    STATE.challengeTimer = null;
+  }
+  document.getElementById('btn-continuous').classList.remove('active');
+  document.getElementById('btn-continuous').textContent = '▶ Тасралтгүй';
+  document.getElementById('btn-add-drop').disabled = true;
+  document.getElementById('btn-continuous').disabled = true;
+  document.getElementById('btn-finish').disabled = true;
+
+  const target = STATE.endpoint;
+  const actual = STATE.volumeAdded;
+  const error = Math.abs(actual - target);
+  const errorPct = (error / target * 100).toFixed(1);
+
+  STATE.experimentNumber++;
+
+  if (success) {
+    STATE.successCount++;
+    STATE.totalError += error;
+    let points = Math.max(20, Math.round(150 - error * 50));
+    if (STATE.appMode === 'challenge') points *= 2;
+    STATE.score += points;
+
+    addLog(`✓ Амжилттай! +${points} оноо`, true);
+    showResultModal(true, { actual, target, error, errorPct, points, reason });
+  } else {
+    STATE.failCount++;
+    addLog(`✗ Бүтэлгүйтэл: ${reason}`, false, true);
+    showResultModal(false, { actual, target, error, errorPct, points: 0, reason });
+  }
+
+  updateStats();
+  document.getElementById('challenge-banner').classList.remove('show');
+  STATE.challengeActive = false;
+}
+
+function showResultModal(success, data) {
+  const modal = document.getElementById('result-modal');
+  const icon = document.getElementById('result-icon');
+  const title = document.getElementById('result-title');
+  const subtitle = document.getElementById('result-subtitle');
+  const detail = document.getElementById('result-detail');
+
+  icon.className = 'result-icon ' + (success ? 'success' : 'fail');
+  icon.textContent = success ? '🎯' : '✗';
+  title.textContent = success ? 'Амжилттай!' : 'Бүтэлгүйтэл';
+
+  let subText = '';
+  if (success) {
+    if (data.error < 0.3) subText = 'Гайхалтай нарийвчлал!';
+    else if (data.error < 0.8) subText = 'Сайн титрлэлт хийлээ';
+    else subText = 'Эквивалент цэгт хүрсэн';
+  } else {
+    if (data.reason === 'overshoot') subText = 'Хэт их титрлэгч нэмлээ';
+    else if (data.reason === 'timeout') subText = 'Цаг хугацаа дууссан';
+    else if (data.reason === 'early') subText = 'Дэндүү эрт зогсоосон';
+    else subText = 'Туршилт амжилтгүй боллоо';
+  }
+  subtitle.textContent = subText;
+
+  document.getElementById('result-actual').textContent = data.actual.toFixed(2) + ' мл';
+  document.getElementById('result-target').textContent = data.target.toFixed(2) + ' мл';
+  document.getElementById('result-error').textContent = '±' + data.error.toFixed(2);
+  document.getElementById('result-error').className = 'value ' + (data.error < 1 ? 'green' : 'red');
+
+  // Calculate concentration
+  const Cb = STATE.titrant.conc;
+  const Vb = data.actual;
+  const Va = STATE.analyte.vol;
+  const acidProtons = STATE.analyte.name === 'H2SO4' ? 2 : 1;
+  const calcConc = (Cb * Vb) / (Va * acidProtons);
+
+  let detailText = '';
+  if (success) {
+    detailText = `<strong>🧪 Тооцооны үр дүн:</strong><br>
+      Та <strong>${data.actual.toFixed(2)} мл</strong> ${STATE.titrant.name} зарцуулсан.<br>
+      Алдаа: ${data.errorPct}%<br><br>
+      <strong>📐 Концентрацийн тооцоо:</strong><br>
+      C(${STATE.analyte.name}) = (C₁ × V₁) / V₂ = (${Cb} × ${Vb.toFixed(2)}) / ${Va} = <strong>${calcConc.toFixed(4)} моль/л</strong><br><br>
+      <strong>🏆 Олж авсан оноо:</strong> +${data.points}`;
+  } else {
+    detailText = `<strong>📊 Анализ:</strong><br>
+      Та ${data.actual.toFixed(2)} мл дусаасан, гэвч зорилт ${data.target.toFixed(2)} мл байсан.<br>
+      Алдаа: ${data.errorPct}%<br><br>
+      <strong>💡 Зөвлөмж:</strong><br>`;
+    if (data.reason === 'overshoot') {
+      detailText += 'Эквивалент цэгт ойртох тусам хурдыг бууруулж, нэг дусал нэг дусал нэмэх хэрэгтэй. Өнгө тогтворгүй ягаахан болсон үед зогсох ёстой.';
+    } else if (data.reason === 'timeout') {
+      detailText += 'Цагтаа багтаахын тулд эхлээд хурдан, эквивалент цэгт ойртохдоо удаашрах техник эзэмшээрэй.';
+    } else {
+      detailText += 'Эквивалент цэгийн утгыг C₁V₁=C₂V₂ томьёогоор урьдчилж тооцоолсон бол илүү амжилттай болох байсан.';
+    }
+  }
+  detail.innerHTML = detailText;
+
+  modal.classList.add('show');
+}
+
+/* ===========================================================
+   AI ASSISTANT
+   =========================================================== */
+async function callClaudeAPI(userPrompt) {
+  const context = `Та титрлэлтийн виртуал лабораторийн AI туслагч. Хэрэглэгч одоо дараах туршилт хийж байна:
+- Горим: ${STATE.titrationType === 'alkali' ? 'Алкалиметр' : 'Ацидиметр'}
+- Колб: ${STATE.analyte.name} ${STATE.analyte.conc} М, ${STATE.analyte.vol} мл
+- Бурет: ${STATE.titrant.name} ${STATE.titrant.conc} М
+- Индикатор: ${STATE.indicator}
+- Одоогийн pH: ${STATE.pH.toFixed(2)}
+- Дусаасан: ${STATE.volumeAdded.toFixed(2)} мл
+- Эквивалент цэг: ${STATE.endpoint ? STATE.endpoint.toFixed(2) + ' мл' : 'тооцоогүй'}
+- Амжилт: ${STATE.successCount}, Бүтэлгүйтэл: ${STATE.failCount}
+
+Хариултаа МОНГОЛ хэлээр, товч (3-5 өгүүлбэр), ойлгомжтой бичнэ үү.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: context,
+        messages: [{ role: "user", content: userPrompt }],
+      })
+    });
+    if (!response.ok) throw new Error('API error');
+    const data = await response.json();
+    return data.content.map(i => i.type === 'text' ? i.text : '').filter(Boolean).join('\n');
+  } catch (err) {
+    return generateFallbackResponse(userPrompt);
+  }
+}
+
+function generateFallbackResponse(question) {
+  const q = question.toLowerCase();
+  if (q.includes('эквивалент')) {
+    return `Эквивалент цэг гэдэг нь титрлэгчийн моль тоо дээжийн моль тоотой яг тэнцүү болсон цэг. ${STATE.endpoint ? 'Таны одоогийн эквивалент эзлэхүүн: ' + STATE.endpoint.toFixed(2) + ' мл' : ''}`;
+  }
+  if (q.includes('тооцоо')) {
+    if (!STATE.endpoint) return 'Туршилт бэлдсэний дараа тооцоо тайлбарлая.';
+    return `C₁V₁=C₂V₂. Таны хувьд: C(${STATE.analyte.name}) = (${STATE.titrant.conc} × ${STATE.endpoint.toFixed(2)}) / ${STATE.analyte.vol} = ${(STATE.titrant.conc * STATE.endpoint / STATE.analyte.vol).toFixed(4)} М.`;
+  }
+  if (q.includes('индикатор')) {
+    const ind = INDICATORS[STATE.indicator];
+    return `"${ind.name}" индикатор pH ${ind.range[0]}–${ind.range[1]} мужид өнгөө өөрчилнө.`;
+  }
+  return 'Сайн асуулт байна. AI холболт түр тасарсан байна. "Заавар"-аас нэмэлт мэдээлэл авна уу.';
+}
+
+function addAIMessage(text, isUser = false) {
+  const messages = document.getElementById('ai-messages');
+  const msg = document.createElement('div');
+  msg.className = 'ai-message ' + (isUser ? 'user' : 'ai');
+  const speaker = isUser ? '👤 Та' : '✦ AI Туслагч';
+  const formatted = text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+  msg.innerHTML = `<span class="speaker">${speaker}</span>${formatted}`;
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function showTypingIndicator() {
+  const messages = document.getElementById('ai-messages');
+  const msg = document.createElement('div');
+  msg.className = 'ai-message ai';
+  msg.id = 'typing-indicator';
+  msg.innerHTML = `<span class="speaker">✦ AI Туслагч</span><div class="typing-dots"><span></span><span></span><span></span></div>`;
+  messages.appendChild(msg);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendAIQuery(text) {
+  if (!text.trim()) return;
+  if (STATE.appMode === 'challenge') {
+    showToast('🔒 Сорилтын горимд AI хаагдсан', 'error');
+    return;
+  }
+  addAIMessage(text, true);
+  showTypingIndicator();
+  document.getElementById('ai-send').disabled = true;
+  try {
+    const reply = await callClaudeAPI(text);
+    removeTypingIndicator();
+    addAIMessage(reply);
+  } catch (err) {
+    removeTypingIndicator();
+    addAIMessage(generateFallbackResponse(text));
+  }
+  document.getElementById('ai-send').disabled = false;
+}
+
+/* ===========================================================
+   PERSISTENCE
+   =========================================================== */
+async function saveProgress() {
+  const data = {
+    score: STATE.score, level: STATE.level,
+    successCount: STATE.successCount, failCount: STATE.failCount,
+    totalError: STATE.totalError, experimentNumber: STATE.experimentNumber,
+  };
+  try {
+    if (window.storage?.set) {
+      await window.storage.set('titration_v2_progress', JSON.stringify(data));
+    }
+  } catch (e) {}
+}
+
+async function loadProgress() {
+  try {
+    if (window.storage?.get) {
+      const r = await window.storage.get('titration_v2_progress');
+      if (r?.value) {
+        const data = JSON.parse(r.value);
+        Object.assign(STATE, data);
+        updateStats();
+      }
+    }
+  } catch (e) {}
+}
+
+/* ===========================================================
+   UI / EVENTS
+   =========================================================== */
+function showToast(text, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function readForm() {
+  STATE.analyte.name = document.getElementById('sel-analyte').value;
+  STATE.analyte.conc = parseFloat(document.getElementById('conc-analyte').value);
+  STATE.analyte.vol = parseFloat(document.getElementById('vol-analyte').value);
+  STATE.titrant.name = document.getElementById('sel-titrant').value;
+  STATE.titrant.conc = parseFloat(document.getElementById('conc-titrant').value);
+  STATE.analyte.type = SUBSTANCE_TYPES[STATE.analyte.name];
+  STATE.titrant.type = SUBSTANCE_TYPES[STATE.titrant.name];
+
+  document.getElementById('conc-analyte-val').textContent = STATE.analyte.conc.toFixed(2) + ' М';
+  document.getElementById('vol-analyte-val').textContent = STATE.analyte.vol + ' мл';
+  document.getElementById('conc-titrant-val').textContent = STATE.titrant.conc.toFixed(2) + ' М';
+}
+
+async function prepareExperiment() {
+  readForm();
+
+  // Animate fill steps
+  document.getElementById('btn-prepare').disabled = true;
+
+  // Step 1: Fill flask
+  const stepFlask = document.getElementById('step-fill-flask');
+  stepFlask.classList.add('active');
+  await new Promise(r => setTimeout(r, 400));
+  STATE.flaskFilled = true;
+  STATE.pH = calcPH();
+  updateLiquidColor();
+  updateFlaskLiquid();
+  stepFlask.classList.remove('active');
+  stepFlask.classList.add('done');
+  stepFlask.querySelector('.icon').textContent = '✓';
+  await new Promise(r => setTimeout(r, 400));
+
+  // Step 2: Fill burette
+  const stepBur = document.getElementById('step-fill-burette');
+  stepBur.classList.add('active');
+  await new Promise(r => setTimeout(r, 400));
+  STATE.buretteFilled = true;
+  // Animate burette filling
+  const startFill = Date.now();
+  const fillInterval = setInterval(() => {
+    const t = Math.min(1, (Date.now() - startFill) / 800);
+    buretteLiquid.scale.y = t;
+    buretteLiquid.position.y = 1.6 - (1 - t) * 1.1;
+    if (t >= 1) clearInterval(fillInterval);
+  }, 16);
+  await new Promise(r => setTimeout(r, 800));
+  stepBur.classList.remove('active');
+  stepBur.classList.add('done');
+  stepBur.querySelector('.icon').textContent = '✓';
+  await new Promise(r => setTimeout(r, 300));
+
+  // Step 3: Add indicator
+  const stepInd = document.getElementById('step-add-indicator');
+  stepInd.classList.add('active');
+  await new Promise(r => setTimeout(r, 300));
+  STATE.indicatorAdded = true;
+  // Quick color flash
+  for (let i = 0; i < 3; i++) {
+    spawnDroplet();
+    await new Promise(r => setTimeout(r, 150));
+  }
+  updateLiquidColor();
+  await new Promise(r => setTimeout(r, 400));
+  stepInd.classList.remove('active');
+  stepInd.classList.add('done');
+  stepInd.querySelector('.icon').textContent = '✓';
+
+  // Now ready
+  STATE.volumeAdded = 0;
+  STATE.pH = calcPH();
+  STATE.endpoint = calcEndpointVolume();
+  STATE.reachedEndpoint = false;
+  STATE.reachedEndpointZone = false;
+  STATE.running = true;
+  STATE.dripping = false;
+  STATE.startTime = Date.now();
+  STATE.log = [];
+  document.getElementById('log-list').innerHTML = '';
+
+  document.getElementById('experiment-title').textContent =
+    `${STATE.analyte.name} + ${STATE.titrant.name}`;
+
+  if (STATE.appMode === 'practice') {
+    document.getElementById('row-endpoint').classList.remove('hidden');
+    document.getElementById('endpoint-vol').textContent = STATE.endpoint.toFixed(2) + ' мл';
+  }
+
+  document.getElementById('btn-add-drop').disabled = false;
+  document.getElementById('btn-continuous').disabled = false;
+  document.getElementById('btn-finish').disabled = false;
+  document.getElementById('btn-prepare').disabled = false;
+
+  updateUI();
+  addLog(`Туршилт эхлэв: ${STATE.analyte.name}+${STATE.titrant.name}`);
+  showToast('🧪 Туршилт бэлэн!', 'success');
+
+  if (STATE.appMode === 'practice') {
+    setTimeout(() => {
+      addAIMessage(`Туршилт бэлдлээ. Колбонд ${STATE.analyte.vol} мл ${STATE.analyte.name} (${STATE.analyte.conc} М) байна. Эквивалент цэгт ойролцоогоор **${STATE.endpoint.toFixed(2)} мл** зарцуулагдана. Эхэлцгээе!`);
+    }, 500);
+  }
+}
+
+function startChallenge() {
+  // Generate random parameters
+  const analyteOptions = ['HCl', 'H2SO4', 'CH3COOH', 'HNO3'];
+  const concOptions = [0.05, 0.08, 0.10, 0.15, 0.20];
+  const volOptions = [20, 25, 30, 40];
+
+  STATE.analyte.name = analyteOptions[Math.floor(Math.random() * analyteOptions.length)];
+  STATE.analyte.conc = concOptions[Math.floor(Math.random() * concOptions.length)];
+  STATE.analyte.vol = volOptions[Math.floor(Math.random() * volOptions.length)];
+  STATE.titrant.name = 'NaOH';
+  STATE.titrant.conc = concOptions[Math.floor(Math.random() * concOptions.length)];
+  STATE.titrationType = 'alkali';
+
+  // Auto-select indicator based on combination
+  const aType = SUBSTANCE_TYPES[STATE.analyte.name];
+  if (aType === 'weak-acid') STATE.indicator = 'phenolphthalein';
+  else STATE.indicator = ['phenolphthalein', 'bromothymol', 'methylorange'][Math.floor(Math.random() * 3)];
+
+  // Set difficulty
+  const diffMap = { easy: 2.0, medium: 0.8, hard: 0.3 };
+  STATE.challengeTolerance = diffMap[STATE.difficulty];
+
+  STATE.endpoint = calcEndpointVolume();
+  STATE.challengeTarget = STATE.endpoint;
+  STATE.challengeActive = true;
+  STATE.challengeTimeLeft = 180;
+
+  // Show task
+  const taskText = `<div style="font-size: 13px; line-height: 1.7;">
+    <strong style="color: var(--accent-gold);">Даалгавар:</strong><br>
+    Колбонд <strong>${STATE.analyte.vol} мл</strong> ${STATE.analyte.name} (концентраци үл мэдэгдэх) байна.<br>
+    Бурет дотор <strong>${STATE.titrant.conc} М</strong> ${STATE.titrant.name}.<br>
+    Индикатор: <strong>${INDICATORS[STATE.indicator].name}</strong><br><br>
+    <strong style="color: var(--accent-acid);">Зорилго:</strong> Эквивалент цэгийг олж, ${STATE.analyte.name}-ийн концентрацийг тогтоо.<br>
+    <strong style="color: var(--accent-amber);">Хүлцэл:</strong> ±${STATE.challengeTolerance} мл
+  </div>`;
+  document.getElementById('challenge-task-text').innerHTML = taskText;
+
+  // Update form values to match (read-only display)
+  document.getElementById('sel-analyte').value = STATE.analyte.name;
+  document.getElementById('vol-analyte').value = STATE.analyte.vol;
+  document.getElementById('conc-titrant').value = STATE.titrant.conc;
+  readForm();
+
+  // Show banner
+  document.getElementById('challenge-banner').classList.add('show');
+  document.getElementById('challenge-banner-text').textContent =
+    `${STATE.analyte.name} (${STATE.analyte.vol}мл) дээж · Хүндрэл: ${STATE.difficulty}`;
+
+  // Start timer
+  STATE.challengeTimer = setInterval(() => {
+    STATE.challengeTimeLeft--;
+    const m = Math.floor(STATE.challengeTimeLeft / 60);
+    const s = STATE.challengeTimeLeft % 60;
+    document.getElementById('challenge-timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    if (STATE.challengeTimeLeft <= 0) {
+      finishExperiment(false, 'timeout');
+    }
+  }, 1000);
+
+  // Auto-prepare
+  prepareExperiment();
+}
+
+function resetExperiment() {
+  STATE.running = false;
+  STATE.dripping = false;
+  STATE.volumeAdded = 0;
+  STATE.pH = 7;
+  STATE.flaskFilled = false;
+  STATE.buretteFilled = false;
+  STATE.indicatorAdded = false;
+  STATE.reachedEndpoint = false;
+  STATE.reachedEndpointZone = false;
+
+  if (STATE.challengeTimer) {
+    clearInterval(STATE.challengeTimer);
+    STATE.challengeTimer = null;
+  }
+  STATE.challengeActive = false;
+
+  droplets.forEach(d => scene.remove(d));
+  droplets = [];
+  splashParticles.forEach(p => scene.remove(p));
+  splashParticles = [];
+
+  // Reset visual
+  if (flaskLiquid) {
+    flaskLiquid.scale.y = 0.001;
+    flaskLiquid.material.color.setRGB(1,1,1);
+    flaskLiquid.material.opacity = 0;
+  }
+  if (buretteLiquid) {
+    buretteLiquid.scale.y = 0.001;
+  }
+
+  // Reset prep steps
+  document.querySelectorAll('.fill-step').forEach((s, i) => {
+    s.classList.remove('done', 'active');
+    s.querySelector('.icon').textContent = ['①', '②', '③'][i];
+  });
+
+  document.getElementById('row-endpoint').classList.add('hidden');
+  document.getElementById('row-target').classList.add('hidden');
+  document.getElementById('experiment-title').textContent = 'Шинэ туршилт';
+  document.getElementById('challenge-banner').classList.remove('show');
+  document.getElementById('btn-add-drop').disabled = true;
+  document.getElementById('btn-continuous').disabled = true;
+  document.getElementById('btn-finish').disabled = true;
+  document.getElementById('btn-continuous').classList.remove('active');
+  document.getElementById('btn-continuous').textContent = '▶ Тасралтгүй';
+
+  document.getElementById('log-list').innerHTML =
+    '<div class="log-entry"><span class="time">00:00</span><span class="text">Шинэчлэв</span><span class="ph-tag">—</span></div>';
+
+  updateUI();
+}
+
+function bindEvents() {
+  // App mode (Practice / Challenge)
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      STATE.appMode = tab.dataset.appMode;
+      document.getElementById('practice-setup').style.display = STATE.appMode === 'practice' ? 'block' : 'none';
+      document.getElementById('challenge-setup').style.display = STATE.appMode === 'challenge' ? 'block' : 'none';
+      document.getElementById('setup-title').textContent =
+        STATE.appMode === 'challenge' ? 'Сорилтын тохиргоо' : 'Туршилтын тохиргоо';
+      document.getElementById('setup-badge').className = 'badge' + (STATE.appMode === 'challenge' ? ' warn' : '');
+      document.getElementById('setup-badge').textContent = STATE.appMode === 'challenge' ? 'Challenge' : 'Setup';
+      document.getElementById('ai-lock').classList.toggle('show', STATE.appMode === 'challenge');
+      resetExperiment();
+    });
+  });
+
+  // Titration type (Mode switch)
+  document.querySelectorAll('.mode-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-toggle').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      STATE.titrationType = btn.dataset.titration;
+      // Swap default analyte/titrant
+      const analyteSel = document.getElementById('sel-analyte');
+      const titrantSel = document.getElementById('sel-titrant');
+      if (STATE.titrationType === 'acid') {
+        // We're titrating a base with an acid
+        analyteSel.innerHTML = `
+          <option value="NaOH">NaOH — Натрийн гидроксид</option>
+          <option value="KOH">KOH — Калийн гидроксид</option>
+          <option value="Na2CO3">Na₂CO₃ — Натрийн карбонат</option>
+        `;
+        titrantSel.innerHTML = `
+          <option value="HCl">HCl — Давсны хүчил</option>
+          <option value="H2SO4">H₂SO₄ — Хүхрийн хүчил</option>
+          <option value="HNO3">HNO₃ — Азотын хүчил</option>
+        `;
+      } else {
+        // Alkalimeter - titrating acid with base
+        analyteSel.innerHTML = `
+          <option value="HCl">HCl — Давсны хүчил</option>
+          <option value="H2SO4">H₂SO₄ — Хүхрийн хүчил</option>
+          <option value="CH3COOH">CH₃COOH — Цууны хүчил</option>
+          <option value="HNO3">HNO₃ — Азотын хүчил</option>
+        `;
+        titrantSel.innerHTML = `
+          <option value="NaOH">NaOH — Натрийн гидроксид</option>
+          <option value="KOH">KOH — Калийн гидроксид</option>
+        `;
+      }
+      readForm();
+    });
+  });
+
+  // Difficulty
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      STATE.difficulty = btn.dataset.diff;
+    });
+  });
+
+  // Indicator
+  document.querySelectorAll('.indicator-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.indicator-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      STATE.indicator = chip.dataset.indicator;
+      if (STATE.prepared || STATE.running) {
+        updateLiquidColor();
+        updateColorBar();
+      }
+    });
+  });
+
+  // Form inputs
+  ['sel-analyte', 'sel-titrant'].forEach(id => {
+    document.getElementById(id).addEventListener('change', readForm);
+  });
+  ['conc-analyte', 'vol-analyte', 'conc-titrant'].forEach(id => {
+    document.getElementById(id).addEventListener('input', readForm);
+  });
+
+  // Buttons
+  document.getElementById('btn-prepare').addEventListener('click', prepareExperiment);
+  document.getElementById('btn-reset').addEventListener('click', resetExperiment);
+  document.getElementById('btn-start-challenge').addEventListener('click', () => {
+    resetExperiment();
+    startChallenge();
+  });
+
+  // Drip controls
+  document.getElementById('btn-add-drop').addEventListener('click', () => {
+    if (!STATE.running) return;
+    STATE.dripMode = 'single';
+    doDrip();
+  });
+
+  document.getElementById('btn-continuous').addEventListener('click', e => {
+    if (!STATE.running) return;
+    STATE.dripMode = 'continuous';
+    STATE.dripping = !STATE.dripping;
+    e.currentTarget.classList.toggle('active', STATE.dripping);
+    e.currentTarget.textContent = STATE.dripping ? '⏸ Зогсоох' : '▶ Тасралтгүй';
+  });
+
+  // Finish button - manual end
+  document.getElementById('btn-finish').addEventListener('click', () => {
+    if (!STATE.running) return;
+    const target = STATE.endpoint;
+    const actual = STATE.volumeAdded;
+    const error = Math.abs(actual - target);
+
+    let success = false;
+    let reason = '';
+
+    if (STATE.appMode === 'challenge') {
+      success = error <= STATE.challengeTolerance;
+      if (!success) reason = actual < target ? 'early' : 'overshoot';
+    } else {
+      // In practice, success if within ±1.5 mL
+      success = error <= 1.5;
+      if (!success) reason = actual < target ? 'early' : 'overshoot';
+    }
+
+    finishExperiment(success, reason);
+  });
+
+  document.getElementById('drip-rate').addEventListener('input', e => {
+    STATE.dripRate = parseInt(e.target.value);
+    const labels = ['Маш удаан', 'Удаан', 'Удаан', 'Удаавтар', 'Дунд', 'Дунд', 'Хурдан', 'Хурдан', 'Маш хурдан', 'Дээд'];
+    document.getElementById('drip-rate-display').textContent = labels[STATE.dripRate - 1];
+  });
+
+  // AI
+  document.getElementById('ai-send').addEventListener('click', () => {
+    const inp = document.getElementById('ai-input');
+    const txt = inp.value.trim();
+    if (!txt) return;
+    inp.value = '';
+    sendAIQuery(txt);
+  });
+
+  document.getElementById('ai-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('ai-send').click();
+    }
+  });
+
+  document.querySelectorAll('.suggestion-chip').forEach(chip => {
+    chip.addEventListener('click', () => sendAIQuery(chip.dataset.prompt));
+  });
+
+  // Modals
+  document.getElementById('btn-help').addEventListener('click', () => document.getElementById('help-modal').classList.add('show'));
+  document.getElementById('help-close').addEventListener('click', () => document.getElementById('help-modal').classList.remove('show'));
+  document.getElementById('help-modal').addEventListener('click', e => {
+    if (e.target.id === 'help-modal') e.target.classList.remove('show');
+  });
+
+  document.getElementById('result-close').addEventListener('click', () => {
+    document.getElementById('result-modal').classList.remove('show');
+  });
+  document.getElementById('result-retry').addEventListener('click', () => {
+    document.getElementById('result-modal').classList.remove('show');
+    resetExperiment();
+    if (STATE.appMode === 'challenge') {
+      // Show challenge setup again
+    }
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  bindEvents();
+  initThree();
+  loadProgress();
+  readForm();
+  updateUI();
+  document.getElementById('drip-rate-display').textContent = 'Дунд';
+});
+</script>
+</body>
+</html>
